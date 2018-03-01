@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Breeer</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+
+    <string name="server_url">http://breeeeeeeer.xf.cz</string>
+    <string name="script_url">/get_all_markers.php</string>
+    <string name="google_maps_key">AIzaSyC00e4W5UpFTlIigShvdnFdiE44RrRT0NE</string>
+</resources>
