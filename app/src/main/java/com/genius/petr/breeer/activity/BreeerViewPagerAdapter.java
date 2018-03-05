@@ -3,7 +3,7 @@ package com.genius.petr.breeer.activity;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.util.SparseArray;
 import android.view.ViewGroup;
 
@@ -15,7 +15,7 @@ import java.util.List;
  * Created by Petr on 25. 2. 2018.
  */
 
-public class BreeerViewPagerAdapter extends FragmentPagerAdapter {
+public class BreeerViewPagerAdapter extends FragmentStatePagerAdapter {
     private final SparseArray<WeakReference<Fragment>> instantiatedFragments = new SparseArray<>();
     private final List<Fragment> mFragmentList = new ArrayList<>();
     private final List<String> mFragmentTitleList = new ArrayList<>();

@@ -36,6 +36,9 @@ public interface PlaceDao {
     @Query("SELECT * FROM " + Place.TABLE_NAME + " WHERE " + Place.COLUMN_TYPE + " = :type")
     Cursor selectByType(long type);
 
+    @Query("SELECT * FROM " + Place.TABLE_NAME + " WHERE " + Place.COLUMN_TYPE + " = :type")
+    List<Place> getListByType(long type);
+
     @Query("DELETE FROM " + Place.TABLE_NAME + " WHERE " + Place.COLUMN_ID + " = :id")
     int deleteById(long id);
 

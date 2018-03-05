@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
         viewPager = findViewById(R.id.viewpager);
-        viewPager.setOffscreenPageLimit(2);
+        viewPager.setOffscreenPageLimit(1);
         viewPager.setPagingEnabled(false);
         BreeerViewPagerAdapter adapter = new BreeerViewPagerAdapter (MainActivity.this.getSupportFragmentManager());
         adapter.addFragment(new FragmentMap(), "Map");
