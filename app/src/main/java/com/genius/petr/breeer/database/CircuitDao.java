@@ -1,14 +1,12 @@
 package com.genius.petr.breeer.database;
 
 import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.ProcessLifecycleOwner;
 import android.arch.persistence.room.Dao;
 import android.arch.persistence.room.Insert;
 import android.arch.persistence.room.OnConflictStrategy;
 import android.arch.persistence.room.Query;
 import android.arch.persistence.room.Update;
 
-import java.security.PKCS12Attribute;
 import java.util.List;
 
 /**
@@ -47,8 +45,9 @@ public interface CircuitDao {
 */
 
     // List all users by deviceId
+    /*
     @Query("SELECT " +
-            "P._id, P.name, P.type, P.lat, P.lng, P.description, " +
+            "P._id, P.name, P.category, P.lat, P.lng, P.description, " +
             "P.phone, P.web, P.address, P.opening_hours " +
             " FROM " + Place.TABLE_NAME +
             " P INNER JOIN ( SELECT " +
@@ -59,6 +58,7 @@ public interface CircuitDao {
             " ORDER BY " + CircuitStop.COLUMN_NUMBER +" ) LINK  ON " +
             "LINK.place_id = P._id")
     List<Place> getStopsOfCircuit(long id);
+    */
 
     // List all users by deviceId
     @Query("SELECT " +

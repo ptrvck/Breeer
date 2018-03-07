@@ -47,7 +47,7 @@ public class FragmentPlaceDetail extends Fragment {
             @Override
             public void onChanged(@Nullable Place place) {
                 tvPlaceName.setText(place.getName());
-                tvPlaceType.setText(PlaceConstants.CATEGORY_NAMES.get(place.getType()));
+                tvPlaceType.setText(PlaceConstants.CATEGORY_NAMES.get(place.getCategory()));
             }
         });
 

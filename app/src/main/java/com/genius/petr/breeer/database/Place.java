@@ -19,7 +19,7 @@ public class Place {
 
     public static final String COLUMN_NAME = "name";
 
-    public static final String COLUMN_TYPE = "type";
+    public static final String COLUMN_CATEGORY = "type";
 
     public static final String COLUMN_LATITUDE = "lat";
 
@@ -44,8 +44,8 @@ public class Place {
     @ColumnInfo(name = COLUMN_NAME)
     public String name;
 
-    @ColumnInfo(name = COLUMN_TYPE)
-    public int type;
+    @ColumnInfo(name = COLUMN_CATEGORY)
+    public int category;
 
     @ColumnInfo(name = COLUMN_LATITUDE)
     public double lat;
@@ -78,8 +78,8 @@ public class Place {
             place.name = values.getAsString(COLUMN_NAME);
         }
 
-        if (values.containsKey(COLUMN_TYPE)) {
-            place.type = values.getAsInteger(COLUMN_TYPE);
+        if (values.containsKey(COLUMN_CATEGORY)) {
+            place.category = values.getAsInteger(COLUMN_CATEGORY);
         }
         return place;
     }
@@ -92,8 +92,8 @@ public class Place {
         return id;
     }
 
-    public int getType() {
-        return type;
+    public int getCategory() {
+        return category;
     }
 
     public double getLat() {

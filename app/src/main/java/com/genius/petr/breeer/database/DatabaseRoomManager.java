@@ -1,9 +1,6 @@
 package com.genius.petr.breeer.database;
 
-import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -78,7 +75,7 @@ public class DatabaseRoomManager {
         Place place = new Place();
         place.id = id;
         place.name = name;
-        place.type = type;
+        place.category = type;
         place.lat = lat;
         place.lng = lng;
         place.description = description;

@@ -10,11 +10,13 @@ import com.google.maps.android.clustering.ClusterItem;
 public class PlaceCluster implements ClusterItem {
 
     private long id;
+    private int category;
     private LatLng position;
 
-    public PlaceCluster(LatLng position, long id) {
+    public PlaceCluster(LatLng position, long id, int category) {
         this.position = position;
         this.id = id;
+        this.category = category;
     }
 
     @Override
@@ -30,5 +32,9 @@ public class PlaceCluster implements ClusterItem {
     @Override
     public String getSnippet() {
         return null;
+    }
+
+    public int getCategory() {
+        return category;
     }
 }
