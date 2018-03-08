@@ -44,11 +44,11 @@ public interface CircuitDao {
     List<Place> getStopsOfCircuit(long id);
 */
 
-    // List all users by deviceId
-    /*
+
+    //TODO: toto zprehlednit - ty "AS" tam jsou proto, ze to generuje metodu a nevim, proc, ale dava to tam proste puvodni nazvy - ignoruje to "P."
     @Query("SELECT " +
-            "P._id, P.name, P.category, P.lat, P.lng, P.description, " +
-            "P.phone, P.web, P.address, P.opening_hours " +
+            "P._id AS _id, P.name AS name, P.type AS type, P.lat AS lat, P.lng AS lng, P.description AS description, " +
+            "P.phone AS phone, P.web AS web, P.address AS address, P.opening_hours AS opening_hours" +
             " FROM " + Place.TABLE_NAME +
             " P INNER JOIN ( SELECT " +
             CircuitStop.COLUMN_PLACE_ID + ", " +
@@ -58,7 +58,12 @@ public interface CircuitDao {
             " ORDER BY " + CircuitStop.COLUMN_NUMBER +" ) LINK  ON " +
             "LINK.place_id = P._id")
     List<Place> getStopsOfCircuit(long id);
-    */
+
+    @Query("SELECT * FROM " +
+            CircuitNode.TABLE_NAME +
+            " WHERE " + CircuitNode.COLUMN_CIRCUIT_ID + " = :id" +
+            " ORDER BY " + CircuitNode.COLUMN_NUMBER)
+    List<CircuitNode> getNodesOfCircuit(long id);
 
     // List all users by deviceId
     @Query("SELECT " +

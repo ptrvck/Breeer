@@ -6,6 +6,8 @@ import android.arch.persistence.room.PrimaryKey;
 import android.content.ContentValues;
 import android.provider.BaseColumns;
 
+import com.google.android.gms.maps.model.LatLng;
+
 /**
  * Created by Petr on 10. 2. 2018.
  */
@@ -102,6 +104,10 @@ public class Place {
 
     public double getLng() {
         return lng;
+    }
+
+    public LatLng getPosition() {
+        return new LatLng(lat, lng);
     }
 
     public String getDescription() {

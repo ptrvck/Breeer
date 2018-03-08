@@ -6,6 +6,8 @@ import android.arch.persistence.room.ForeignKey;
 import android.arch.persistence.room.PrimaryKey;
 import android.provider.BaseColumns;
 
+import com.google.android.gms.maps.model.LatLng;
+
 /**
  * Created by Petr on 23. 2. 2018.
  */
@@ -60,5 +62,9 @@ public class CircuitNode {
 
     public int getNumber() {
         return number;
+    }
+
+    public LatLng getPosition() {
+        return new LatLng(lat, lng);
     }
 }

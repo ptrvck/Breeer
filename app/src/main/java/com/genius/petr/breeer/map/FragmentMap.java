@@ -11,6 +11,8 @@ import android.widget.Button;
 
 import com.genius.petr.breeer.R;
 import com.genius.petr.breeer.database.AppDatabase;
+import com.genius.petr.breeer.database.Circuit;
+import com.genius.petr.breeer.database.CircuitNode;
 import com.genius.petr.breeer.database.Place;
 import com.genius.petr.breeer.database.PlaceConstants;
 import com.google.android.gms.maps.GoogleMap;
@@ -19,14 +21,13 @@ import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.maps.android.MarkerManager;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.clustering.ClusterManager;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by Petr on 24. 2. 2018.
@@ -40,30 +41,14 @@ public class FragmentMap extends Fragment {
     private GoogleMap googleMap;
     private ClusterManager<PlaceCluster> clusterManager;
 
-    private Button button;
-
     private static final String STATE_MAP_CAMERA = "map camera";
 
-    //todo: zapamatovat si state mapy a pak ho obnovit
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, final Bundle savedInstanceState) {
         Log.i("Breeer", "OnCreateView called");
         View rootView = inflater.inflate(R.layout.fragment_map, container, false);
 
-        button = rootView.findViewById(R.id.button);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                List<Integer> categories = new ArrayList<>();
-                categories.add(1);
-                categories.add(3);
-                categories.add(6);
-                AddMarkersAsyncTask task = new AddMarkersAsyncTask(FragmentMap.this, AppDatabase.getDatabase(getContext().getApplicationContext()), categories);
-                task.execute();
-                clusterManager.clearItems();
-                clusterManager.cluster();
-            }
-        });
+        testBullshit(rootView);
 
         mMapView = rootView.findViewById(R.id.mapView);
         mMapView.onCreate(savedInstanceState);
@@ -90,7 +75,7 @@ public class FragmentMap extends Fragment {
 
                 AddMarkersAsyncTask task = new AddMarkersAsyncTask(FragmentMap.this, AppDatabase.getDatabase(getContext().getApplicationContext()), PlaceConstants.CATEGORIES);
                 task.execute();
-                // For showing a move to my location button
+                // For showing a move to my location button1
                 //googleMap.setMyLocationEnabled(true);
 
                 // For dropping a marker at a point on the Map
@@ -104,6 +89,30 @@ public class FragmentMap extends Fragment {
         });
 
         return rootView;
+    }
+
+    private void testBullshit(View rootView) {
+        Button button1 = rootView.findViewById(R.id.button1);
+        button1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                List<Integer> categories = new ArrayList<>();
+                categories.add(1);
+                categories.add(3);
+                categories.add(6);
+                AddMarkersAsyncTask task = new AddMarkersAsyncTask(FragmentMap.this, AppDatabase.getDatabase(getContext().getApplicationContext()), categories);
+                task.execute();
+            }
+        });
+
+        Button button2 = rootView.findViewById(R.id.button2);
+        button2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ShowCircuitAsyncTask task = new ShowCircuitAsyncTask(FragmentMap.this, AppDatabase.getDatabase(getContext().getApplicationContext()), 4);
+                task.execute();
+            }
+        });
     }
 
     @Override
@@ -137,21 +146,41 @@ public class FragmentMap extends Fragment {
         mMapView.onSaveInstanceState(outState);
     }
 
-    private  void addAllMarkers(Map<Integer, List<Place>> places){
+    private  void addClusters(List<PlaceCluster> clusters){
         clusterManager.clearItems();
-        for (Map.Entry<Integer, List<Place>> entry : places.entrySet()) {
-            int category = entry.getKey();
-            List<Place> placesOfCategory = entry.getValue();
-
-            for (Place place : placesOfCategory) {
-                PlaceCluster cluster = new PlaceCluster(new LatLng(place.getLat(), place.getLng()), place.getId(), category);
-                clusterManager.addItem(cluster);
-            }
+        for (PlaceCluster cluster : clusters) {
+            clusterManager.addItem(cluster);
         }
+
         clusterManager.cluster();
     }
 
-    private static class AddMarkersAsyncTask extends AsyncTask<Void, Void, Map<Integer, List<Place>>> {
+    private void showCircuit(CircuitMapWrapper circuit) {
+        clusterManager.clearItems();
+        clusterManager.cluster();
+
+        for (Place place : circuit.getStops()) {
+            MarkerOptions markerOptions = new MarkerOptions().position(place.getPosition()).title(Long.toString(place.getId()));
+            googleMap.addMarker(markerOptions);
+        }
+
+        List<LatLng> path = circuit.getPath();
+
+        if (path.size() < 2) {
+            return;
+        }
+
+        PolylineOptions polylineOptions = new PolylineOptions();
+
+        for (LatLng node : path) {
+            polylineOptions.add(node);
+        }
+
+        googleMap.addPolyline(polylineOptions);
+    }
+
+
+    private static class AddMarkersAsyncTask extends AsyncTask<Void, Void, List<PlaceCluster>> {
 
         private WeakReference<FragmentMap> fragment;
         private final AppDatabase mDb;
@@ -164,22 +193,64 @@ public class FragmentMap extends Fragment {
         }
 
         @Override
-        protected Map<Integer, List<Place>> doInBackground(final Void... params) {
-            Map<Integer, List<Place>> places = new HashMap<>();
+        protected List<PlaceCluster> doInBackground(final Void... params) {
+            List<PlaceCluster> clusters = new ArrayList<>();
 
             for (int category : categories) {
-                places.put(category, mDb.place().getListByCategory(category));
+                List<Place> placesOfCategory = mDb.place().getListByCategory(category);
+
+                for (Place place : placesOfCategory) {
+                    PlaceCluster cluster = new PlaceCluster(new LatLng(place.getLat(), place.getLng()), place.getId(), category);
+                    clusters.add(cluster);
+                }
             }
 
 
-            return places;
+            return clusters;
         }
 
         @Override
-        protected void onPostExecute(Map<Integer, List<Place>> places) {
+        protected void onPostExecute(List<PlaceCluster> clusters) {
             final FragmentMap fragment = this.fragment.get();
             if (fragment != null) {
-                fragment.addAllMarkers(places);
+                fragment.addClusters(clusters);
+            }
+        }
+    }
+
+    private static class ShowCircuitAsyncTask extends AsyncTask<Void, Void, CircuitMapWrapper> {
+
+        private WeakReference<FragmentMap> fragment;
+        private final AppDatabase mDb;
+        private long circuitId;
+
+        public ShowCircuitAsyncTask(FragmentMap fragment, AppDatabase db, long id) {
+            this.fragment = new WeakReference<>(fragment);
+            this.mDb = db;
+            this.circuitId = id;
+        }
+
+        @Override
+        protected CircuitMapWrapper doInBackground(final Void... params) {
+            List<Place> stops = mDb.circuit().getStopsOfCircuit(circuitId);
+
+            List<CircuitNode> nodes = mDb.circuit().getNodesOfCircuit(circuitId);
+            List<LatLng> path = new ArrayList<>();
+
+            for (CircuitNode node : nodes) {
+                path.add(node.getPosition());
+            }
+
+            CircuitMapWrapper circuitMapWrapper = new CircuitMapWrapper(stops, path);
+
+            return circuitMapWrapper;
+        }
+
+        @Override
+        protected void onPostExecute(CircuitMapWrapper circuitMapWrapper) {
+            final FragmentMap fragment = this.fragment.get();
+            if (fragment != null) {
+                fragment.showCircuit(circuitMapWrapper);
             }
         }
     }

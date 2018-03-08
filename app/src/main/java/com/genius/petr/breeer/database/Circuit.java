@@ -1,6 +1,7 @@
 package com.genius.petr.breeer.database;
 
 import android.arch.persistence.room.Embedded;
+import android.arch.persistence.room.Ignore;
 import android.arch.persistence.room.Relation;
 
 import java.util.List;
@@ -15,4 +16,9 @@ public class Circuit {
 
     @Relation(parentColumn = CircuitBase.COLUMN_ID, entityColumn = CircuitNode.COLUMN_CIRCUIT_ID)
     public List<CircuitNode> nodes;
+
+    @Ignore
+    public long getId() {
+        return circuitBase.getId();
+    }
 }
