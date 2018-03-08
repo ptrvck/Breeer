@@ -3,6 +3,7 @@ package com.genius.petr.breeer.map;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,12 +16,14 @@ import com.genius.petr.breeer.database.Circuit;
 import com.genius.petr.breeer.database.CircuitNode;
 import com.genius.petr.breeer.database.Place;
 import com.genius.petr.breeer.database.PlaceConstants;
+import com.genius.petr.breeer.places.FragmentPlaceEssentials;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.clustering.ClusterManager;
@@ -28,6 +31,7 @@ import com.google.maps.android.clustering.ClusterManager;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Petr on 24. 2. 2018.
@@ -75,6 +79,26 @@ public class FragmentMap extends Fragment {
 
                 AddMarkersAsyncTask task = new AddMarkersAsyncTask(FragmentMap.this, AppDatabase.getDatabase(getContext().getApplicationContext()), PlaceConstants.CATEGORIES);
                 task.execute();
+
+                googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+                    @Override
+                    public boolean onMarkerClick(Marker marker) {
+                        String title = marker.getTitle();
+
+                        //cluster TODO: zoom
+                        if (title == null) {
+                            return true;
+                        }
+
+                        long id = Long.parseLong(title);
+                        showPlaceInfo(id);
+
+                        return true;
+                    }
+                });
+
+
+
                 // For showing a move to my location button1
                 //googleMap.setMyLocationEnabled(true);
 
@@ -89,6 +113,13 @@ public class FragmentMap extends Fragment {
         });
 
         return rootView;
+    }
+
+    private void showPlaceInfo(long id) {
+        Log.i(TAG, "marker clicked, id: " + id);
+
+        FragmentManager manager = getChildFragmentManager();
+        manager.beginTransaction().replace(R.id.place_essentials_frame, FragmentPlaceEssentials.newInstance(id)).commit();
     }
 
     private void testBullshit(View rootView) {
