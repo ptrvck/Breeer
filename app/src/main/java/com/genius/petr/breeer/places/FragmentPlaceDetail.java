@@ -8,9 +8,11 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.genius.petr.breeer.R;
+import com.genius.petr.breeer.activity.MainActivity;
 import com.genius.petr.breeer.database.Place;
 import com.genius.petr.breeer.database.PlaceConstants;
 
@@ -48,6 +50,16 @@ public class FragmentPlaceDetail extends Fragment {
             public void onChanged(@Nullable Place place) {
                 tvPlaceName.setText(place.getName());
                 tvPlaceType.setText(PlaceConstants.CATEGORY_NAMES.get(place.getCategory()));
+            }
+        });
+
+        Button mapButton = view.findViewById(R.id.button_showOnMap);
+        mapButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                MainActivity activity = (MainActivity)getActivity();
+                Place place = viewModel.getPlace().getValue();
+                activity.showPlaceOnMap(place);
             }
         });
 

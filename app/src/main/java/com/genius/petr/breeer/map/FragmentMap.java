@@ -1,27 +1,51 @@
 package com.genius.petr.breeer.map;
 
+import android.Manifest;
+import android.content.DialogInterface;
+import android.content.pm.PackageManager;
+import android.graphics.Point;
+import android.location.Location;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Looper;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.view.ViewPager;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.TranslateAnimation;
 import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import com.genius.petr.breeer.R;
+import com.genius.petr.breeer.circuits.CircuitMapPagerAdapter;
+import com.genius.petr.breeer.circuits.CircuitMapViewModel;
 import com.genius.petr.breeer.database.AppDatabase;
-import com.genius.petr.breeer.database.Circuit;
 import com.genius.petr.breeer.database.CircuitNode;
 import com.genius.petr.breeer.database.Place;
 import com.genius.petr.breeer.database.PlaceConstants;
 import com.genius.petr.breeer.places.FragmentPlaceEssentials;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -30,6 +54,7 @@ import com.google.maps.android.clustering.ClusterManager;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -37,13 +62,26 @@ import java.util.Map;
  * Created by Petr on 24. 2. 2018.
  */
 
-public class FragmentMap extends Fragment {
+public class FragmentMap
+        extends Fragment
+        implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, GoogleMap.OnMapClickListener {
 
     private static final String TAG = "mapFragmentLog";
+    private static final String PLACE_ESSENTIALS_TAG = "placeEssentialsFragment";
 
     private MapView mMapView;
     private GoogleMap googleMap;
     private ClusterManager<PlaceCluster> clusterManager;
+
+    //todo - important for selecting marker from outside of map
+    //private Map<Long, PlaceCluster> clusters;
+    private List<Marker> circuitMarkers;
+
+    private LocationRequest mLocationRequest;
+    private FusedLocationProviderClient mFusedLocationClient;
+    private Marker mCurrLocationMarker;
+    private Location mLastLocation;
+
 
     private static final String STATE_MAP_CAMERA = "map camera";
 
@@ -54,6 +92,8 @@ public class FragmentMap extends Fragment {
 
         testBullshit(rootView);
 
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getContext());
+
         mMapView = rootView.findViewById(R.id.mapView);
         mMapView.onCreate(savedInstanceState);
 
@@ -63,63 +103,248 @@ public class FragmentMap extends Fragment {
             e.printStackTrace();
         }
 
-        mMapView.getMapAsync(new OnMapReadyCallback() {
-            @Override
-            public void onMapReady(GoogleMap mMap) {
-                googleMap = mMap;
-                clusterManager = new ClusterManager<>(getContext(), googleMap);
-                googleMap.setOnCameraIdleListener(clusterManager);
-
-                if (savedInstanceState != null) {
-                    CameraPosition cameraPosition = savedInstanceState.getParcelable(STATE_MAP_CAMERA);
-                    if (cameraPosition != null) {
-                        //googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-                    }
-                }
-
-                AddMarkersAsyncTask task = new AddMarkersAsyncTask(FragmentMap.this, AppDatabase.getDatabase(getContext().getApplicationContext()), PlaceConstants.CATEGORIES);
-                task.execute();
-
-                googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-                    @Override
-                    public boolean onMarkerClick(Marker marker) {
-                        String title = marker.getTitle();
-
-                        //cluster TODO: zoom
-                        if (title == null) {
-                            return true;
-                        }
-
-                        long id = Long.parseLong(title);
-                        showPlaceInfo(id);
-
-                        return true;
-                    }
-                });
-
-
-
-                // For showing a move to my location button1
-                //googleMap.setMyLocationEnabled(true);
-
-                // For dropping a marker at a point on the Map
-                //LatLng sydney = new LatLng(-34, 151);
-                //googleMap.addMarker(new MarkerOptions().position(sydney).title("Marker Title").snippet("Marker Description"));
-
-                // For zooming automatically to the location of the marker
-                //CameraPosition cameraPosition = new CameraPosition.Builder().target(sydney).zoom(12).build();
-                //googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-            }
-        });
+        mMapView.getMapAsync(this);
 
         return rootView;
+    }
+
+
+    @Override
+    public void onMapReady(GoogleMap googleMap){
+        this.googleMap = googleMap;
+        clusterManager = new ClusterManager<>(getContext(), googleMap);
+        googleMap.setOnCameraIdleListener(clusterManager);
+        googleMap.setOnMapClickListener(this);
+
+        AddMarkersAsyncTask task = new AddMarkersAsyncTask(FragmentMap.this, AppDatabase.getDatabase(getContext().getApplicationContext()), PlaceConstants.CATEGORIES);
+        task.execute();
+
+        googleMap.setOnMarkerClickListener(this);
+
+        mLocationRequest = new LocationRequest();
+        mLocationRequest.setInterval(2000); // two minute interval
+        mLocationRequest.setFastestInterval(500);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (ContextCompat.checkSelfPermission(getContext(),
+                    Manifest.permission.ACCESS_FINE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED) {
+                //Location Permission already granted
+                mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
+                this.googleMap.setMyLocationEnabled(true);
+                Log.i(TAG, "location permission granted");
+            } else {
+                //Request Location Permission
+                Log.i(TAG, "requesting location permission");
+                checkLocationPermission();
+            }
+        }
+        else {
+            mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
+            googleMap.setMyLocationEnabled(true);
+        }
+
+        // For showing a move to my location button1
+        //googleMap.setMyLocationEnabled(true);
+
+        // For dropping a marker at a point on the Map
+        //LatLng sydney = new LatLng(-34, 151);
+        //googleMap.addMarker(new MarkerOptions().position(sydney).title("Marker Title").snippet("Marker Description"));
+
+        // For zooming automatically to the location of the marker
+        //CameraPosition cameraPosition = new CameraPosition.Builder().target(sydney).zoom(12).build();
+        //googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+    }
+
+
+    public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
+
+    private void checkLocationPermission() {
+        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // Should we show an explanation?
+            if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
+
+                Log.i(TAG, "show explanation");
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+                new AlertDialog.Builder(getContext())
+                        .setTitle("Location Permission Needed")
+                        .setMessage("This app needs the Location permission, please accept to use location functionality")
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                //Prompt the user once explanation has been shown
+                                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                                        MY_PERMISSIONS_REQUEST_LOCATION );
+                            }
+                        })
+                        .create()
+                        .show();
+
+
+            } else {
+                Log.i(TAG, "explanation not needed");
+                // No explanation needed, we can request the permission.
+                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        MY_PERMISSIONS_REQUEST_LOCATION );
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_LOCATION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // location-related task you need to do.
+                    if (ContextCompat.checkSelfPermission(getContext(),
+                            Manifest.permission.ACCESS_FINE_LOCATION)
+                            == PackageManager.PERMISSION_GRANTED) {
+
+                        mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
+                        googleMap.setMyLocationEnabled(true);
+                    }
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                    Toast.makeText(getContext(), "permission denied", Toast.LENGTH_LONG).show();
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
+
+    }
+
+
+    LocationCallback mLocationCallback = new LocationCallback(){
+        @Override
+        public void onLocationResult(LocationResult locationResult) {
+            for (Location location : locationResult.getLocations()) {
+                Log.i(TAG, "Location: " + location.getLatitude() + " " + location.getLongitude());
+                mLastLocation = location;
+
+                /*
+                if (mCurrLocationMarker != null) {
+                    mCurrLocationMarker.remove();
+                }
+
+                //Place current location marker
+                LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+                MarkerOptions markerOptions = new MarkerOptions();
+                markerOptions.position(latLng);
+                markerOptions.title("Current Position");
+                markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+                mCurrLocationMarker = googleMap.addMarker(markerOptions);
+
+                //move map camera
+                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 11));
+                */
+            }
+        };
+
+    };
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        String title = marker.getTitle();
+
+        //cluster
+        if (title == null) {
+            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                    marker.getPosition(), (float) Math.floor(googleMap
+                            .getCameraPosition().zoom + 1)), 300,
+                    null);
+            return true;
+        }
+
+        long id = Long.parseLong(title);
+        showPlaceInfo(id);
+
+        return true;
+    }
+
+    @Override
+    public void onMapClick(LatLng latLng) {
+        hidePlaceInfo();
+    }
+
+    public void selectPlace(Place place) {
+        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getPosition(), 16));
+
+        Collection<Marker> markers = clusterManager.getMarkerCollection().getMarkers();
+        for (Marker marker : markers) {
+            //id is stored in marker title
+            if (marker.getTitle().equals(Long.toString(place.getId()))) {
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getPosition(), 14));
+            }
+        }
+        //MarkerOptions markerOptions = new MarkerOptions().position(place.getPosition()).title(Long.toString(place.getId()));
+        //googleMap.addMarker(markerOptions);
     }
 
     private void showPlaceInfo(long id) {
         Log.i(TAG, "marker clicked, id: " + id);
 
         FragmentManager manager = getChildFragmentManager();
-        manager.beginTransaction().replace(R.id.place_essentials_frame, FragmentPlaceEssentials.newInstance(id)).commit();
+
+        FragmentTransaction transaction = manager.beginTransaction();
+        transaction.setCustomAnimations(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+
+        FragmentPlaceEssentials newFragment = FragmentPlaceEssentials.newInstance(id);
+
+        transaction.replace(R.id.place_essentials_frame, newFragment, PLACE_ESSENTIALS_TAG);
+
+        transaction.commit();
+    }
+
+    private void hidePlaceInfo(){
+        Display display = getActivity().getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        final int width = size.x;
+
+        final FrameLayout fragmentLayout = getView().findViewById(R.id.place_essentials_frame);
+
+        final FragmentManager manager = getChildFragmentManager();
+        final Fragment fragment = manager.findFragmentByTag(PLACE_ESSENTIALS_TAG);
+
+        if (fragment == null) {
+            return;
+        }
+
+        TranslateAnimation trans=new TranslateAnimation(0, -width, 0,0);
+        trans.setDuration(150);
+        trans.setAnimationListener(new Animation.AnimationListener() {
+
+            @Override
+            public void onAnimationStart(Animation animation) {}
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                FragmentTransaction transaction = manager.beginTransaction();
+                transaction.remove(fragment);
+                transaction.commit();
+            }
+        });
+
+        fragmentLayout.startAnimation(trans);
     }
 
     private void testBullshit(View rootView) {
@@ -189,10 +414,11 @@ public class FragmentMap extends Fragment {
     private void showCircuit(CircuitMapWrapper circuit) {
         clusterManager.clearItems();
         clusterManager.cluster();
-
+        circuitMarkers = new ArrayList<>();
         for (Place place : circuit.getStops()) {
             MarkerOptions markerOptions = new MarkerOptions().position(place.getPosition()).title(Long.toString(place.getId()));
-            googleMap.addMarker(markerOptions);
+            Marker marker = googleMap.addMarker(markerOptions);
+            circuitMarkers.add(marker);
         }
 
         List<LatLng> path = circuit.getPath();
@@ -206,6 +432,12 @@ public class FragmentMap extends Fragment {
         for (LatLng node : path) {
             polylineOptions.add(node);
         }
+
+        ViewPager viewPager = getView().findViewById(R.id.viewpager_circuitStops);
+        CircuitMapViewModel viewModel = new CircuitMapViewModel(circuit.getStops());
+        CircuitMapPagerAdapter adapter = new CircuitMapPagerAdapter(getContext(), viewModel);
+        viewPager.setAdapter(adapter);
+        viewPager.setVisibility(View.VISIBLE);
 
         googleMap.addPolyline(polylineOptions);
     }

@@ -25,10 +25,20 @@ public class FragmentPlaces extends Fragment implements View.OnLongClickListener
     private PlaceListViewModel viewModel;
     private PlaceAdapter placeAdapter;
     private RecyclerView recyclerView;
+    public static final String ARGUMENT_CATEGORY = "category";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_circuits, container, false);
+        View view = inflater.inflate(R.layout.fragment_place_list, container, false);
+
+        long category = 0;
+        Bundle arg = getArguments();
+        if (arg.containsKey(ARGUMENT_CATEGORY)) {
+            category = arg.getLong(ARGUMENT_CATEGORY);
+        } else {
+            //category to display not set
+            return view;
+        }
 
 
         recyclerView = view.findViewById(R.id.list);
@@ -37,7 +47,9 @@ public class FragmentPlaces extends Fragment implements View.OnLongClickListener
 
         recyclerView.setAdapter(placeAdapter);
 
-        viewModel = ViewModelProviders.of(this).get(PlaceListViewModel.class);
+        viewModel = ViewModelProviders.of(this,
+                new PlaceListViewModelFactory(getActivity().getApplication(), category))
+                .get(PlaceListViewModel.class);
 
         viewModel.getPlaceList().observe(getActivity(), new Observer<List<Place>>() {
             @Override

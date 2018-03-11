@@ -19,12 +19,12 @@ public class PlaceListViewModel extends AndroidViewModel {
 
     private AppDatabase appDatabase;
 
-    public PlaceListViewModel(Application application) {
+    public PlaceListViewModel(Application application, long category) {
         super(application);
 
         appDatabase = AppDatabase.getDatabase(this.getApplication());
 
-        placeList = appDatabase.place().selectAll();
+        placeList = appDatabase.place().selectByCategory(category);
     }
 
     public LiveData<List<Place>> getPlaceList() {

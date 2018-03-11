@@ -7,6 +7,8 @@
     android:layout_height="match_parent"
     tools:context="com.genius.petr.breeer.activity.MainActivity">
 
+
+
     <android.support.design.widget.BottomNavigationView
         android:id="@+id/navigation"
         android:layout_width="match_parent"
@@ -15,10 +17,16 @@
         android:background="?android:attr/windowBackground"
         app:menu="@menu/navigation" />
 
+
     <com.genius.petr.breeer.activity.BreeerViewPager
         android:id="@+id/viewpager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/navigation"/>
+
+    <FrameLayout
+        android:id="@+id/fragmentLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
 </RelativeLayout>
