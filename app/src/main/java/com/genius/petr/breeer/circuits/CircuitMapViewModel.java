@@ -17,7 +17,6 @@ import java.util.List;
 
 public class CircuitMapViewModel {
 
-    private String TAG = "PlaceDetail";
     private final List<Place> circuitStops;
 
     private AppDatabase appDatabase;

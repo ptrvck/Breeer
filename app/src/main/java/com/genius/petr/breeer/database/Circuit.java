@@ -21,4 +21,9 @@ public class Circuit {
     public long getId() {
         return circuitBase.getId();
     }
+
+    @Ignore
+    public String getName() {
+        return circuitBase.getName();
+    }
 }

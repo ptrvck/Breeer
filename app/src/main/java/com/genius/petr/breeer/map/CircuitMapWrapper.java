@@ -12,8 +12,10 @@ import java.util.List;
 class CircuitMapWrapper {
     List<Place> stops;
     List<LatLng> path;
+    String name;
 
-    public CircuitMapWrapper(List<Place> stops, List<LatLng> path) {
+    public CircuitMapWrapper(String name, List<Place> stops, List<LatLng> path) {
+        this.name = name;
         this.stops = stops;
         this.path = path;
     }
@@ -24,5 +26,9 @@ class CircuitMapWrapper {
 
     public List<LatLng> getPath() {
         return path;
+    }
+
+    public String getName() {
+        return name;
     }
 }

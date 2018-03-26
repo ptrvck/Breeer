@@ -16,6 +16,7 @@
         android:layout_alignParentTop="true"
         android:layout_marginStart="35dp"
         android:layout_marginTop="19dp"
+        android:visibility="gone"
         android:text="1" />
 
     <Button
@@ -24,13 +25,37 @@
         android:layout_height="wrap_content"
         android:layout_alignTop="@+id/button1"
         android:layout_toEndOf="@+id/button1"
+        android:visibility="gone"
         android:text="2" />
 
-    <android.support.v4.view.ViewPager
-        android:id="@+id/viewpager_circuitStops"
-        android:layout_height="120dp"
+    <include layout="@layout/view_filters"
+        android:id="@+id/filtersLayout"/>
+
+    <RelativeLayout
+        android:id="@+id/circuitLayout"
         android:layout_width="match_parent"
-        android:visibility="gone"/>
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/circuitName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/button_closeCircuit"
+            android:text="close"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"/>
+
+        <android.support.v4.view.ViewPager
+            android:layout_below="@id/button_closeCircuit"
+            android:id="@+id/viewpager_circuitStops"
+            android:layout_height="120dp"
+            android:layout_width="match_parent" />
+
+    </RelativeLayout>
 
     <FrameLayout
         android:id="@+id/place_essentials_frame"

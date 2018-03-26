@@ -1,23 +1,26 @@
 package com.genius.petr.breeer.activity;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.internal.BottomNavigationItemView;
+import android.support.design.internal.BottomNavigationMenuView;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.View;
 
+import com.genius.petr.breeer.circuits.FragmentCircuits;
 import com.genius.petr.breeer.database.FragmentDb;
 import com.genius.petr.breeer.database.Place;
 import com.genius.petr.breeer.map.FragmentMap;
 import com.genius.petr.breeer.places.FragmentPlaceCategories;
 import com.genius.petr.breeer.places.FragmentPlaceDetail;
-import com.genius.petr.breeer.places.FragmentPlaces;
 import com.genius.petr.breeer.R;
-import com.google.android.gms.maps.MapFragment;
+
+import java.lang.reflect.Field;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -31,14 +34,17 @@ public class MainActivity extends AppCompatActivity {
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
             switch (item.getItemId()) {
-                case R.id.navigation_home:
+                case R.id.navigation_map:
                     viewPager.setCurrentItem(0);
                     return true;
-                case R.id.navigation_dashboard:
+                case R.id.navigation_circuits:
                     viewPager.setCurrentItem(1);
                     return true;
-                case R.id.navigation_notifications:
+                case R.id.navigation_places:
                     viewPager.setCurrentItem(2);
+                    return true;
+                case R.id.navigation_settings:
+                    viewPager.setCurrentItem(3);
                 return true;
             }
             return false;
@@ -60,11 +66,20 @@ public class MainActivity extends AppCompatActivity {
     //todo: make this solution cleaner
     public void showPlaceOnMap(Place place) {
         BottomNavigationView navigation = findViewById(R.id.navigation);
-        navigation.setSelectedItemId(R.id.navigation_home);
+        navigation.setSelectedItemId(R.id.navigation_map);
 
         BreeerViewPagerAdapter adapter = (BreeerViewPagerAdapter)viewPager.getAdapter();
         FragmentMap mapFragment = (FragmentMap)adapter.getFragment(0);
         mapFragment.selectPlace(place);
+    }
+
+    public void showCircuitOnMap(Long id) {
+        BottomNavigationView navigation = findViewById(R.id.navigation);
+        navigation.setSelectedItemId(R.id.navigation_map);
+
+        BreeerViewPagerAdapter adapter = (BreeerViewPagerAdapter)viewPager.getAdapter();
+        FragmentMap mapFragment = (FragmentMap)adapter.getFragment(0);
+        mapFragment.showCircuit(id);
     }
 
     @Override
@@ -72,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         BottomNavigationView navigation = findViewById(R.id.navigation);
+        disableShiftMode(navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
         viewPager = findViewById(R.id.viewpager);
@@ -79,8 +95,30 @@ public class MainActivity extends AppCompatActivity {
         viewPager.setPagingEnabled(false);
         BreeerViewPagerAdapter adapter = new BreeerViewPagerAdapter (MainActivity.this.getSupportFragmentManager());
         adapter.addFragment(new FragmentMap(), "Map");
+        adapter.addFragment(new FragmentCircuits(), "Circuits");
         adapter.addFragment(new FragmentPlaceCategories(), "Places");
         adapter.addFragment(new FragmentDb(), "Database");
         viewPager.setAdapter(adapter);
+    }
+
+    @SuppressLint("RestrictedApi")
+    private void disableShiftMode(BottomNavigationView view) {
+        BottomNavigationMenuView menuView = (BottomNavigationMenuView) view.getChildAt(0);
+        try {
+            Field shiftingMode = menuView.getClass().getDeclaredField("mShiftingMode");
+            shiftingMode.setAccessible(true);
+            shiftingMode.setBoolean(menuView, false);
+            shiftingMode.setAccessible(false);
+            for (int i = 0; i < menuView.getChildCount(); i++) {
+                BottomNavigationItemView item = (BottomNavigationItemView) menuView.getChildAt(i);
+                item.setShiftingMode(false);
+                // set once again checked value, so view will be updated
+                item.setChecked(item.getItemData().isChecked());
+            }
+        } catch (NoSuchFieldException e) {
+            Log.e("BNVHelper", "Unable to get shift mode field", e);
+        } catch (IllegalAccessException e) {
+            Log.e("BNVHelper", "Unable to change value of shift mode", e);
+        }
     }
 }

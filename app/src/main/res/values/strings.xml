@@ -1,10 +1,21 @@
 <resources>
     <string name="app_name">Breeer</string>
-    <string name="title_home">Home</string>
-    <string name="title_dashboard">Dashboard</string>
-    <string name="title_notifications">Notifications</string>
+    <string name="title_map">Map</string>
+    <string name="title_circuits">Circuits</string>
+    <string name="title_places">Places</string>
+    <string name="title_settings">Settings</string>
 
     <string name="server_url">http://breeeeeeeer.xf.cz</string>
     <string name="script_url">/get_all_markers.php</string>
     <string name="google_maps_key">AIzaSyC00e4W5UpFTlIigShvdnFdiE44RrRT0NE</string>
+
+    <string name="cat_name_00">Area</string>
+    <string name="cat_name_01">Misc</string>
+    <string name="cat_name_02">Food</string>
+    <string name="cat_name_03">Nature</string>
+    <string name="cat_name_04">Coffee</string>
+    <string name="cat_name_05">Beer</string>
+    <string name="cat_name_06">Bar</string>
+    <string name="cat_name_07">Music</string>
+    <string name="cat_name_08">Art</string>
 </resources>

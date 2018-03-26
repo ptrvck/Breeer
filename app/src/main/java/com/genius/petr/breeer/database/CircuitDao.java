@@ -88,7 +88,7 @@ public interface CircuitDao {
 
 
     @Query("SELECT * FROM " + CircuitBase.TABLE_NAME + " WHERE " + CircuitBase.COLUMN_ID + " = :id")
-    LiveData<CircuitBase> selectById(long id);
+    CircuitBase selectById(long id);
 
     @Query("SELECT * FROM " + CircuitBase.TABLE_NAME + " WHERE " + CircuitBase.COLUMN_ID + " = :id")
     LiveData<Circuit> selectCircuitById(long id);

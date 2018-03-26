@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_centerVertical="true"
+    android:layout_alignParentRight="true">
+
+    <CheckBox
+        android:id="@+id/checkBoxFilters"
+        android:layout_height="50dp"
+        android:layout_width="30dp"
+        android:layout_gravity="center_vertical"
+        android:background="@drawable/cb_filters"
+        android:checked="true"
+        android:button="@null"/>
+
+<GridLayout android:layout_height="wrap_content"
+    android:layout_width="wrap_content"
+    android:columnCount="1"
+    android:id="@+id/filtersGrid"
+    android:background="@color/colorBackgroundLight"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp"
+    android:paddingLeft="15dp"
+    android:paddingRight="30dp">
+
+    <CheckBox
+        android:id="@+id/cb_0"
+        style="@style/FilterCheckbox"
+        android:button="@drawable/cb_00_area"
+        android:text="@string/cat_name_00">
+    </CheckBox>
+
+    <CheckBox
+        android:id="@+id/cb_1"
+        style="@style/FilterCheckbox"
+        android:button="@drawable/cb_01_misc"
+        android:text="@string/cat_name_01">
+    </CheckBox>
+
+    <CheckBox
+        android:id="@+id/cb_2"
+        style="@style/FilterCheckbox"
+        android:button="@drawable/cb_02_food"
+        android:text="@string/cat_name_02">
+    </CheckBox>
+
+    <CheckBox
+        android:id="@+id/cb_3"
+        style="@style/FilterCheckbox"
+        android:button="@drawable/cb_03_nature"
+        android:text="@string/cat_name_03">
+    </CheckBox>
+
+    <CheckBox
+        android:id="@+id/cb_4"
+        style="@style/FilterCheckbox"
+        android:button="@drawable/cb_04_coffee"
+        android:text="@string/cat_name_04">
+    </CheckBox>
+
+    <CheckBox
+        android:id="@+id/cb_5"
+        style="@style/FilterCheckbox"
+        android:button="@drawable/cb_05_beer"
+        android:text="@string/cat_name_05">
+    </CheckBox>
+
+    <CheckBox
+        android:id="@+id/cb_6"
+        style="@style/FilterCheckbox"
+        android:button="@drawable/cb_06_bar"
+        android:text="@string/cat_name_06">
+    </CheckBox>
+
+    <CheckBox
+        android:id="@+id/cb_7"
+        style="@style/FilterCheckbox"
+        android:button="@drawable/cb_07_music"
+        android:text="@string/cat_name_07">
+    </CheckBox>
+
+    <CheckBox
+        android:id="@+id/cb_8"
+        style="@style/FilterCheckbox"
+        android:button="@drawable/cb_08_art"
+        android:text="@string/cat_name_08">
+    </CheckBox>
+</GridLayout>
+
+</LinearLayout>

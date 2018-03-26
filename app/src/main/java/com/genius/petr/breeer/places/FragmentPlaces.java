@@ -41,6 +41,7 @@ public class FragmentPlaces extends Fragment implements View.OnLongClickListener
         }
 
 
+        //this is way too complicated for what i need to do
         recyclerView = view.findViewById(R.id.list);
         placeAdapter = new PlaceAdapter(new ArrayList<Place>(), this);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));

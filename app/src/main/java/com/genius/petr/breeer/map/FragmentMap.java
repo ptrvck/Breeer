@@ -1,6 +1,8 @@
 package com.genius.petr.breeer.map;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
@@ -9,7 +11,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -21,16 +22,25 @@ import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.FrameLayout;
+import android.widget.GridLayout;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.genius.petr.breeer.R;
 import com.genius.petr.breeer.circuits.CircuitMapPagerAdapter;
 import com.genius.petr.breeer.circuits.CircuitMapViewModel;
 import com.genius.petr.breeer.database.AppDatabase;
+import com.genius.petr.breeer.database.Circuit;
+import com.genius.petr.breeer.database.CircuitBase;
 import com.genius.petr.breeer.database.CircuitNode;
 import com.genius.petr.breeer.database.Place;
 import com.genius.petr.breeer.database.PlaceConstants;
@@ -45,7 +55,6 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -56,7 +65,6 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by Petr on 24. 2. 2018.
@@ -70,17 +78,24 @@ public class FragmentMap
     private static final String PLACE_ESSENTIALS_TAG = "placeEssentialsFragment";
 
     private MapView mMapView;
-    private GoogleMap googleMap;
+    private GoogleMap map;
     private ClusterManager<PlaceCluster> clusterManager;
 
-    //todo - important for selecting marker from outside of map
-    //private Map<Long, PlaceCluster> clusters;
+    private LinearLayout filtersLayout;
+    private GridLayout filtersGrid;
+    private CheckBox filtersCheckbox;
+
     private List<Marker> circuitMarkers;
 
     private LocationRequest mLocationRequest;
     private FusedLocationProviderClient mFusedLocationClient;
     private Marker mCurrLocationMarker;
     private Location mLastLocation;
+
+    private static final int STATE_PLACES = 0;
+    private static final int STATE_CIRCUIT = 1;
+    private static final int STATE_SINGLE = 2;
+    private int currentState = STATE_PLACES;
 
 
     private static final String STATE_MAP_CAMERA = "map camera";
@@ -91,6 +106,7 @@ public class FragmentMap
         View rootView = inflater.inflate(R.layout.fragment_map, container, false);
 
         testBullshit(rootView);
+        setupFilters(rootView);
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getContext());
 
@@ -109,9 +125,92 @@ public class FragmentMap
     }
 
 
+    private void setupFilters(View rootView) {
+        filtersLayout = rootView.findViewById(R.id.filtersLayout);
+        filtersGrid = filtersLayout.findViewById(R.id.filtersGrid);
+        filtersCheckbox = filtersLayout.findViewById(R.id.checkBoxFilters);
+
+
+        ViewTreeObserver viewTreeObserver = filtersGrid.getViewTreeObserver();
+        if (viewTreeObserver.isAlive()) {
+            viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    filtersGrid.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    final int width = filtersGrid.getWidth();
+
+                    filtersCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                        @Override
+                        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                            if (isChecked) {
+                                filtersLayout.setTranslationX(width);
+                                filtersLayout.animate()
+                                        .translationXBy(-width)
+                                        .setListener(new AnimatorListenerAdapter() {
+                                            @Override
+                                            public void onAnimationStart(Animator animation) {
+                                                super.onAnimationEnd(animation);
+                                                filtersGrid.setVisibility(View.VISIBLE);
+                                            }
+                                        });
+                            } else {
+                                //filtersLayout.setTranslationX();
+                                filtersLayout.animate()
+                                        .translationXBy(width)
+                                        .setListener(new AnimatorListenerAdapter() {
+                                            @Override
+                                            public void onAnimationEnd(Animator animation) {
+                                                super.onAnimationEnd(animation);
+                                                filtersGrid.setVisibility(View.INVISIBLE);
+                                            }
+                                        });
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+
+        for(int i=0; i < filtersGrid.getChildCount(); i++) {
+            View child = filtersGrid.getChildAt(i);
+            if (child instanceof CheckBox) {
+                ((CheckBox) child).setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                    @Override
+                    public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                        refreshMarkers();
+                    }
+                });
+            }
+        }
+    }
+
+    private void refreshMarkers(){
+        List<Integer> categories = new ArrayList<>();
+        int category = 0;
+        
+        for(int i=0; i < filtersGrid.getChildCount(); i++) {
+            View child = filtersGrid.getChildAt(i);
+            if (child instanceof CheckBox) {
+                CheckBox filter = (CheckBox)child;
+                if (filter.isChecked()) {
+                    categories.add(category);
+                }
+            }
+            category++;
+        }
+
+        for (int cat : categories) {
+            Log.i(TAG, "cat displayed: " + cat);
+        }
+
+        AddMarkersAsyncTask task = new AddMarkersAsyncTask(FragmentMap.this, AppDatabase.getDatabase(getContext().getApplicationContext()), categories);
+        task.execute();
+    }
+
     @Override
     public void onMapReady(GoogleMap googleMap){
-        this.googleMap = googleMap;
+        this.map = googleMap;
         clusterManager = new ClusterManager<>(getContext(), googleMap);
         googleMap.setOnCameraIdleListener(clusterManager);
         googleMap.setOnMapClickListener(this);
@@ -132,7 +231,7 @@ public class FragmentMap
                     == PackageManager.PERMISSION_GRANTED) {
                 //Location Permission already granted
                 mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
-                this.googleMap.setMyLocationEnabled(true);
+                this.map.setMyLocationEnabled(true);
                 Log.i(TAG, "location permission granted");
             } else {
                 //Request Location Permission
@@ -211,7 +310,7 @@ public class FragmentMap
                             == PackageManager.PERMISSION_GRANTED) {
 
                         mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
-                        googleMap.setMyLocationEnabled(true);
+                        map.setMyLocationEnabled(true);
                     }
 
                 } else {
@@ -264,8 +363,8 @@ public class FragmentMap
 
         //cluster
         if (title == null) {
-            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                    marker.getPosition(), (float) Math.floor(googleMap
+            map.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                    marker.getPosition(), (float) Math.floor(map
                             .getCameraPosition().zoom + 1)), 300,
                     null);
             return true;
@@ -283,13 +382,13 @@ public class FragmentMap
     }
 
     public void selectPlace(Place place) {
-        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getPosition(), 16));
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getPosition(), 16));
 
         Collection<Marker> markers = clusterManager.getMarkerCollection().getMarkers();
         for (Marker marker : markers) {
             //id is stored in marker title
             if (marker.getTitle().equals(Long.toString(place.getId()))) {
-                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getPosition(), 14));
+                map.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getPosition(), 14));
             }
         }
         //MarkerOptions markerOptions = new MarkerOptions().position(place.getPosition()).title(Long.toString(place.getId()));
@@ -365,8 +464,7 @@ public class FragmentMap
         button2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ShowCircuitAsyncTask task = new ShowCircuitAsyncTask(FragmentMap.this, AppDatabase.getDatabase(getContext().getApplicationContext()), 4);
-                task.execute();
+                map.clear();
             }
         });
     }
@@ -411,13 +509,34 @@ public class FragmentMap
         clusterManager.cluster();
     }
 
+    public void showCircuit(Long id){
+        ShowCircuitAsyncTask task = new ShowCircuitAsyncTask(FragmentMap.this, AppDatabase.getDatabase(getContext().getApplicationContext()), id);
+        task.execute();
+        hideCurrentState();
+    }
+
+    private void hideCurrentState() {
+        if (currentState == STATE_PLACES) {
+            clusterManager.clearItems();
+            clusterManager.cluster();
+            map.clear();
+
+            filtersLayout.setVisibility(View.GONE);
+        }
+
+        if (currentState == STATE_CIRCUIT) {
+            map.clear();
+            RelativeLayout circuitLayout = getView().findViewById(R.id.circuitLayout);
+            circuitLayout.setVisibility(View.GONE);
+        }
+    }
+
     private void showCircuit(CircuitMapWrapper circuit) {
-        clusterManager.clearItems();
-        clusterManager.cluster();
+
         circuitMarkers = new ArrayList<>();
         for (Place place : circuit.getStops()) {
             MarkerOptions markerOptions = new MarkerOptions().position(place.getPosition()).title(Long.toString(place.getId()));
-            Marker marker = googleMap.addMarker(markerOptions);
+            Marker marker = map.addMarker(markerOptions);
             circuitMarkers.add(marker);
         }
 
@@ -433,13 +552,42 @@ public class FragmentMap
             polylineOptions.add(node);
         }
 
+
+        RelativeLayout circuitLayout = getView().findViewById(R.id.circuitLayout);
+        circuitLayout.setVisibility(View.VISIBLE);
+
+
+        TextView tvCircuitName = getView().findViewById(R.id.circuitName);
+        tvCircuitName.setText(circuit.getName());
+
+        Button button_close = getView().findViewById(R.id.button_closeCircuit);
+        button_close.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                closeCircuit();
+            }
+        });
+
         ViewPager viewPager = getView().findViewById(R.id.viewpager_circuitStops);
         CircuitMapViewModel viewModel = new CircuitMapViewModel(circuit.getStops());
         CircuitMapPagerAdapter adapter = new CircuitMapPagerAdapter(getContext(), viewModel);
         viewPager.setAdapter(adapter);
         viewPager.setVisibility(View.VISIBLE);
 
-        googleMap.addPolyline(polylineOptions);
+        map.addPolyline(polylineOptions);
+
+        currentState = STATE_CIRCUIT;
+    }
+
+    public void closeCircuit(){
+        hideCurrentState();
+        activateStatePlaces();
+    }
+
+    public void activateStatePlaces(){
+        refreshMarkers();
+        filtersGrid.setVisibility(View.VISIBLE);
+        currentState = STATE_PLACES;
     }
 
 
@@ -495,6 +643,8 @@ public class FragmentMap
 
         @Override
         protected CircuitMapWrapper doInBackground(final Void... params) {
+            CircuitBase circuit = mDb.circuit().selectById(circuitId);
+
             List<Place> stops = mDb.circuit().getStopsOfCircuit(circuitId);
 
             List<CircuitNode> nodes = mDb.circuit().getNodesOfCircuit(circuitId);
@@ -504,7 +654,7 @@ public class FragmentMap
                 path.add(node.getPosition());
             }
 
-            CircuitMapWrapper circuitMapWrapper = new CircuitMapWrapper(stops, path);
+            CircuitMapWrapper circuitMapWrapper = new CircuitMapWrapper(circuit.getName(), stops, path);
 
             return circuitMapWrapper;
         }
