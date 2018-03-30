@@ -131,7 +131,7 @@ public class FragmentMap
         filtersCheckbox = filtersLayout.findViewById(R.id.checkBoxFilters);
 
 
-        ViewTreeObserver viewTreeObserver = filtersGrid.getViewTreeObserver();
+        final ViewTreeObserver viewTreeObserver = filtersGrid.getViewTreeObserver();
         if (viewTreeObserver.isAlive()) {
             viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                 @Override
@@ -167,7 +167,12 @@ public class FragmentMap
                             }
                         }
                     });
+
+                    if (!filtersCheckbox.isChecked()) {
+                        filtersLayout.setTranslationX(width);
+                    }
                 }
+
             });
         }
 
