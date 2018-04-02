@@ -7,8 +7,12 @@ import android.support.annotation.NonNull;
 
 import com.genius.petr.breeer.database.AppDatabase;
 import com.genius.petr.breeer.database.Circuit;
+import com.genius.petr.breeer.database.CircuitBase;
+import com.genius.petr.breeer.database.CircuitNode;
 import com.genius.petr.breeer.database.Place;
+import com.google.android.gms.maps.model.LatLng;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -17,19 +21,44 @@ import java.util.List;
 
 public class CircuitMapViewModel {
 
-    private final List<Place> circuitStops;
+    private List<Place> stops;
+    private List<LatLng> path;
+    private String name;
+    private long id;
 
-    private AppDatabase appDatabase;
-    public CircuitMapViewModel(@NonNull Application application, long id) {
-        appDatabase = AppDatabase.getDatabase(application);
-        circuitStops = appDatabase.circuit().getStopsOfCircuit(id);
+    public CircuitMapViewModel(AppDatabase db, long id) {
+        CircuitBase circuit = db.circuit().selectById(id);
+        name = circuit.getName();
+        this.id = circuit.getId();
+
+        stops = db.circuit().getStopsOfCircuit(id);
+        List<CircuitNode> nodes = db.circuit().getNodesOfCircuit(id);
+
+        path = new ArrayList<>();
+
+        for (CircuitNode node : nodes) {
+            path.add(node.getPosition());
+        }
     }
 
-    public CircuitMapViewModel(List<Place> stops) {
-        circuitStops = stops;
+    //todo: this is so unclean
+    public CircuitMapViewModel(long id) {
+        this.id = id;
     }
 
     public List<Place> getStops() {
-        return circuitStops;
+        return stops;
+    }
+
+    public List<LatLng> getPath() {
+        return path;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public long getId() {
+        return id;
     }
 }

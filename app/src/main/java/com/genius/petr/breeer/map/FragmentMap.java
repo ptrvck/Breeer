@@ -86,11 +86,10 @@ public class FragmentMap
     private CheckBox filtersCheckbox;
 
     private List<Marker> circuitMarkers;
+    private CircuitMapViewModel activeCircuit;
 
     private LocationRequest mLocationRequest;
     private FusedLocationProviderClient mFusedLocationClient;
-    private Marker mCurrLocationMarker;
-    private Location mLastLocation;
 
     private static final int STATE_PLACES = 0;
     private static final int STATE_CIRCUIT = 1;
@@ -98,15 +97,13 @@ public class FragmentMap
     private int currentState = STATE_PLACES;
 
 
-    private static final String STATE_MAP_CAMERA = "map camera";
+    private static final String SAVE_STATE_STATE = "state";
+    private static final String SAVE_STATE_CIRCUIT = "active_circuit";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, final Bundle savedInstanceState) {
         Log.i("Breeer", "OnCreateView called");
         View rootView = inflater.inflate(R.layout.fragment_map, container, false);
-
-        testBullshit(rootView);
-        setupFilters(rootView);
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getContext());
 
@@ -118,6 +115,19 @@ public class FragmentMap
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        if (savedInstanceState != null) {
+            if (savedInstanceState.containsKey(SAVE_STATE_STATE)) {
+                currentState = savedInstanceState.getInt(SAVE_STATE_STATE);
+            }
+            if(currentState == STATE_CIRCUIT) {
+                long id = savedInstanceState.getLong(SAVE_STATE_CIRCUIT);
+                Log.i("circuitTest", "restored id: " + id);
+                activeCircuit = new CircuitMapViewModel(id);
+            }
+        }
+
+        setupFilters(rootView);
 
         mMapView.getMapAsync(this);
 
@@ -174,18 +184,29 @@ public class FragmentMap
                 }
 
             });
+
+            if (currentState != STATE_PLACES) {
+                filtersLayout.setVisibility(View.GONE);
+            }
         }
 
 
         for(int i=0; i < filtersGrid.getChildCount(); i++) {
             View child = filtersGrid.getChildAt(i);
             if (child instanceof CheckBox) {
-                ((CheckBox) child).setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                final CheckBox filter = (CheckBox) child;
+                filter.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                     @Override
                     public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                        if (!filter.isPressed())
+                        {
+                            // Not from user!
+                            return;
+                        }
                         refreshMarkers();
                     }
                 });
+
             }
         }
     }
@@ -219,10 +240,6 @@ public class FragmentMap
         clusterManager = new ClusterManager<>(getContext(), googleMap);
         googleMap.setOnCameraIdleListener(clusterManager);
         googleMap.setOnMapClickListener(this);
-
-        AddMarkersAsyncTask task = new AddMarkersAsyncTask(FragmentMap.this, AppDatabase.getDatabase(getContext().getApplicationContext()), PlaceConstants.CATEGORIES);
-        task.execute();
-
         googleMap.setOnMarkerClickListener(this);
 
         mLocationRequest = new LocationRequest();
@@ -249,6 +266,7 @@ public class FragmentMap
             googleMap.setMyLocationEnabled(true);
         }
 
+
         // For showing a move to my location button1
         //googleMap.setMyLocationEnabled(true);
 
@@ -259,6 +277,15 @@ public class FragmentMap
         // For zooming automatically to the location of the marker
         //CameraPosition cameraPosition = new CameraPosition.Builder().target(sydney).zoom(12).build();
         //googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
+        if (currentState == STATE_PLACES) {
+            refreshMarkers();
+        }
+
+        if (currentState == STATE_CIRCUIT) {
+            Log.i("circuitTest", "showing circuit: " + activeCircuit.getId());
+            showCircuit(activeCircuit.getId());
+        }
     }
 
 
@@ -339,7 +366,7 @@ public class FragmentMap
         public void onLocationResult(LocationResult locationResult) {
             for (Location location : locationResult.getLocations()) {
                 Log.i(TAG, "Location: " + location.getLatitude() + " " + location.getLongitude());
-                mLastLocation = location;
+                //mLastLocation = location;
 
                 /*
                 if (mCurrLocationMarker != null) {
@@ -451,28 +478,6 @@ public class FragmentMap
         fragmentLayout.startAnimation(trans);
     }
 
-    private void testBullshit(View rootView) {
-        Button button1 = rootView.findViewById(R.id.button1);
-        button1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                List<Integer> categories = new ArrayList<>();
-                categories.add(1);
-                categories.add(3);
-                categories.add(6);
-                AddMarkersAsyncTask task = new AddMarkersAsyncTask(FragmentMap.this, AppDatabase.getDatabase(getContext().getApplicationContext()), categories);
-                task.execute();
-            }
-        });
-
-        Button button2 = rootView.findViewById(R.id.button2);
-        button2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                map.clear();
-            }
-        });
-    }
 
     @Override
     public void onResume() {
@@ -503,6 +508,12 @@ public class FragmentMap
         Log.i(TAG, "onSaveCalled");
         super.onSaveInstanceState(outState);
         mMapView.onSaveInstanceState(outState);
+        outState.putInt(SAVE_STATE_STATE, currentState);
+        Log.i("circuitTest", "current state: " + currentState);
+        if (currentState == STATE_CIRCUIT) {
+            outState.putLong(SAVE_STATE_CIRCUIT, activeCircuit.getId());
+            Log.i("circuitTest", "saving id: " + activeCircuit.getId());
+        }
     }
 
     private  void addClusters(List<PlaceCluster> clusters){
@@ -515,15 +526,18 @@ public class FragmentMap
     }
 
     public void showCircuit(Long id){
+        hideCurrentState();
+        Log.i("circuitTest", "id: " + id);
         ShowCircuitAsyncTask task = new ShowCircuitAsyncTask(FragmentMap.this, AppDatabase.getDatabase(getContext().getApplicationContext()), id);
         task.execute();
-        hideCurrentState();
     }
 
     private void hideCurrentState() {
         if (currentState == STATE_PLACES) {
-            clusterManager.clearItems();
-            clusterManager.cluster();
+            if (clusterManager != null) {
+                clusterManager.clearItems();
+                clusterManager.cluster();
+            }
             map.clear();
 
             filtersLayout.setVisibility(View.GONE);
@@ -531,21 +545,26 @@ public class FragmentMap
 
         if (currentState == STATE_CIRCUIT) {
             map.clear();
+            activeCircuit = null;
+            if (circuitMarkers != null) {
+                circuitMarkers.clear();
+                circuitMarkers = null;
+            }
             RelativeLayout circuitLayout = getView().findViewById(R.id.circuitLayout);
             circuitLayout.setVisibility(View.GONE);
         }
     }
 
-    private void showCircuit(CircuitMapWrapper circuit) {
+    private void showCircuit(CircuitMapViewModel viewModel) {
 
         circuitMarkers = new ArrayList<>();
-        for (Place place : circuit.getStops()) {
+        for (Place place : viewModel.getStops()) {
             MarkerOptions markerOptions = new MarkerOptions().position(place.getPosition()).title(Long.toString(place.getId()));
             Marker marker = map.addMarker(markerOptions);
             circuitMarkers.add(marker);
         }
 
-        List<LatLng> path = circuit.getPath();
+        List<LatLng> path = viewModel.getPath();
 
         if (path.size() < 2) {
             return;
@@ -563,7 +582,7 @@ public class FragmentMap
 
 
         TextView tvCircuitName = getView().findViewById(R.id.circuitName);
-        tvCircuitName.setText(circuit.getName());
+        tvCircuitName.setText(viewModel.getName());
 
         Button button_close = getView().findViewById(R.id.button_closeCircuit);
         button_close.setOnClickListener(new View.OnClickListener() {
@@ -574,13 +593,13 @@ public class FragmentMap
         });
 
         ViewPager viewPager = getView().findViewById(R.id.viewpager_circuitStops);
-        CircuitMapViewModel viewModel = new CircuitMapViewModel(circuit.getStops());
         CircuitMapPagerAdapter adapter = new CircuitMapPagerAdapter(getContext(), viewModel);
         viewPager.setAdapter(adapter);
         viewPager.setVisibility(View.VISIBLE);
 
         map.addPolyline(polylineOptions);
 
+        activeCircuit = viewModel;
         currentState = STATE_CIRCUIT;
     }
 
@@ -591,7 +610,7 @@ public class FragmentMap
 
     public void activateStatePlaces(){
         refreshMarkers();
-        filtersGrid.setVisibility(View.VISIBLE);
+        filtersLayout.setVisibility(View.VISIBLE);
         currentState = STATE_PLACES;
     }
 
@@ -634,7 +653,7 @@ public class FragmentMap
         }
     }
 
-    private static class ShowCircuitAsyncTask extends AsyncTask<Void, Void, CircuitMapWrapper> {
+    private static class ShowCircuitAsyncTask extends AsyncTask<Void, Void, CircuitMapViewModel> {
 
         private WeakReference<FragmentMap> fragment;
         private final AppDatabase mDb;
@@ -647,28 +666,17 @@ public class FragmentMap
         }
 
         @Override
-        protected CircuitMapWrapper doInBackground(final Void... params) {
-            CircuitBase circuit = mDb.circuit().selectById(circuitId);
+        protected CircuitMapViewModel doInBackground(final Void... params) {
+            CircuitMapViewModel viewModel = new CircuitMapViewModel(mDb, circuitId);
 
-            List<Place> stops = mDb.circuit().getStopsOfCircuit(circuitId);
-
-            List<CircuitNode> nodes = mDb.circuit().getNodesOfCircuit(circuitId);
-            List<LatLng> path = new ArrayList<>();
-
-            for (CircuitNode node : nodes) {
-                path.add(node.getPosition());
-            }
-
-            CircuitMapWrapper circuitMapWrapper = new CircuitMapWrapper(circuit.getName(), stops, path);
-
-            return circuitMapWrapper;
+            return viewModel;
         }
 
         @Override
-        protected void onPostExecute(CircuitMapWrapper circuitMapWrapper) {
+        protected void onPostExecute(CircuitMapViewModel viewModel) {
             final FragmentMap fragment = this.fragment.get();
             if (fragment != null) {
-                fragment.showCircuit(circuitMapWrapper);
+                fragment.showCircuit(viewModel);
             }
         }
     }

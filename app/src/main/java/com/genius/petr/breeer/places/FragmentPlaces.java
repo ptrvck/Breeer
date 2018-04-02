@@ -20,7 +20,7 @@ import com.genius.petr.breeer.database.Place;
  * Created by Petr on 9. 2. 2018.
  */
 
-public class FragmentPlaces extends Fragment implements View.OnLongClickListener{
+public class FragmentPlaces extends Fragment implements View.OnClickListener{
 
     private PlaceListViewModel viewModel;
     private PlaceAdapter placeAdapter;
@@ -52,22 +52,20 @@ public class FragmentPlaces extends Fragment implements View.OnLongClickListener
                 new PlaceListViewModelFactory(getActivity().getApplication(), category))
                 .get(PlaceListViewModel.class);
 
-        viewModel.getPlaceList().observe(getActivity(), new Observer<List<Place>>() {
-            @Override
-            public void onChanged(@Nullable List<Place> places) {
-                placeAdapter.addItems(places);
-            }
-        });
+//        viewModel.getPlaceList().observe(getActivity(), new Observer<List<Place>>() {
+//            @Override
+//            public void onChanged(@Nullable List<Place> places) {
+//                placeAdapter.addItems(places);
+//            }
+//        });
 
         return view;
     }
 
     @Override
-    public boolean onLongClick(View v) {
+    public void onClick(View v) {
         Place place = (Place) v.getTag();
 
         ((MainActivity)this.getActivity()).showPlaceDetail(place.getId());
-
-        return true;
     }
 }

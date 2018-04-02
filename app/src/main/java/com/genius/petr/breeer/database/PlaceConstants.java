@@ -1,5 +1,7 @@
 package com.genius.petr.breeer.database;
 
+import com.genius.petr.breeer.R;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -12,6 +14,7 @@ import java.util.Map;
 
 public class PlaceConstants {
     public static final Map<Integer, String> CATEGORY_NAMES;
+    public static final Map<Integer, Integer> CATEGORY_COLORS;
     public static final List<Integer> CATEGORIES;
     static {
         List<Integer> categories = new ArrayList<>();
@@ -32,5 +35,17 @@ public class PlaceConstants {
         categoryNames.put(7, "Music");
         categoryNames.put(8, "Art");
         CATEGORY_NAMES = Collections.unmodifiableMap(categoryNames);
+
+        Map<Integer, Integer> colorIds = new HashMap<>();
+        colorIds.put(0, R.color.colorAreaAccent);
+        colorIds.put(1, R.color.colorMiscAccent);
+        colorIds.put(2, R.color.colorFoodAccent);
+        colorIds.put(3, R.color.colorNatureAccent);
+        colorIds.put(4, R.color.colorCoffeeAccent);
+        colorIds.put(5, R.color.colorBeerAccent);
+        colorIds.put(6, R.color.colorBarAccent);
+        colorIds.put(7, R.color.colorMusicAccent);
+        colorIds.put(8, R.color.colorArtAccent);
+        CATEGORY_COLORS = Collections.unmodifiableMap(colorIds);
     }
 }

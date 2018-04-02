@@ -34,7 +34,7 @@ public interface PlaceDao {
 
 
     @Query("SELECT * FROM " + Place.TABLE_NAME + " WHERE " + Place.COLUMN_CATEGORY + " = :category")
-    LiveData<List<Place>> selectByCategory(long category);
+    List<Place> selectByCategory(long category);
 
     @Query("SELECT * FROM " + Place.TABLE_NAME + " WHERE " + Place.COLUMN_CATEGORY + " = :category")
     List<Place> getListByCategory(long category);

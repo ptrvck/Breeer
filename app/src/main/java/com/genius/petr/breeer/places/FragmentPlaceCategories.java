@@ -19,6 +19,7 @@ import com.genius.petr.breeer.activity.MainActivity;
 public class FragmentPlaceCategories extends Fragment {
 
     private static final String TAG = "placeCategoriesFragment";
+    public static final String ARGUMENT_CATEGORY = "category";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -34,9 +35,9 @@ public class FragmentPlaceCategories extends Fragment {
                 PlaceCategory category = (PlaceCategory)categoriesAdapter.getItem(position);
                 Log.i(TAG, "category clicked: " + category.getName());
 
-                FragmentPlaces fragmentPlaces = new FragmentPlaces();
+                FragmentPlacesViewPager fragmentPlaces = new FragmentPlacesViewPager();
                 Bundle args = new Bundle();
-                args.putLong(FragmentPlaces.ARGUMENT_CATEGORY, category.getNumber());
+                args.putInt(ARGUMENT_CATEGORY, category.getNumber());
                 fragmentPlaces.setArguments(args);
 
                 MainActivity activity = (MainActivity) getActivity();

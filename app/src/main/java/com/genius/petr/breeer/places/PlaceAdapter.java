@@ -18,12 +18,12 @@ import java.util.List;
 public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.PlaceViewHolder> {
 
     private List<Place> placeList;
-    private View.OnLongClickListener longClickListener;
+    private View.OnClickListener onClickListener;
 
 
-    public PlaceAdapter(List<Place> placeList, View.OnLongClickListener longClickListener) {
+    public PlaceAdapter(List<Place> placeList, View.OnClickListener onClickListener) {
         this.placeList = placeList;
-        this.longClickListener = longClickListener;
+        this.onClickListener = onClickListener;
     }
 
     @Override
@@ -38,7 +38,7 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.PlaceViewHol
         holder.tvName.setText(place.getName());
         holder.tvId.setText(Long.toString(place.getId()));
         holder.itemView.setTag(place);
-        holder.itemView.setOnLongClickListener(longClickListener);
+        holder.itemView.setOnClickListener(onClickListener);
     }
 
     @Override

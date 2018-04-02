@@ -15,7 +15,7 @@ import java.util.List;
 
 public class PlaceListViewModel extends AndroidViewModel {
 
-    private final LiveData<List<Place>> placeList;
+    private final List<Place> placeList;
 
     private AppDatabase appDatabase;
 
@@ -27,7 +27,7 @@ public class PlaceListViewModel extends AndroidViewModel {
         placeList = appDatabase.place().selectByCategory(category);
     }
 
-    public LiveData<List<Place>> getPlaceList() {
+    public List<Place> getPlaceList() {
         return placeList;
     }
 
