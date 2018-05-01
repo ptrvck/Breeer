@@ -36,6 +36,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.genius.petr.breeer.R;
+import com.genius.petr.breeer.activity.MainActivity;
 import com.genius.petr.breeer.circuits.CircuitMapPagerAdapter;
 import com.genius.petr.breeer.circuits.CircuitMapViewModel;
 import com.genius.petr.breeer.database.AppDatabase;
@@ -60,6 +61,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.clustering.ClusterManager;
+import com.google.maps.android.clustering.algo.Algorithm;
+import com.google.maps.android.clustering.algo.NonHierarchicalDistanceBasedAlgorithm;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -87,6 +90,8 @@ public class FragmentMap
 
     private List<Marker> circuitMarkers;
     private CircuitMapViewModel activeCircuit;
+    private Place activePlace;
+    private long activePlaceId = -1;
 
     private LocationRequest mLocationRequest;
     private FusedLocationProviderClient mFusedLocationClient;
@@ -99,6 +104,7 @@ public class FragmentMap
 
     private static final String SAVE_STATE_STATE = "state";
     private static final String SAVE_STATE_CIRCUIT = "active_circuit";
+    private static final String SAVE_STATE_PLACE = "active_place";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, final Bundle savedInstanceState) {
@@ -124,6 +130,11 @@ public class FragmentMap
                 long id = savedInstanceState.getLong(SAVE_STATE_CIRCUIT);
                 Log.i("circuitTest", "restored id: " + id);
                 activeCircuit = new CircuitMapViewModel(id);
+            }
+            if(currentState == STATE_SINGLE) {
+                long id = savedInstanceState.getLong(SAVE_STATE_PLACE);
+                Log.i("placeTest", "restored id: " + id);
+                activePlaceId = id;
             }
         }
 
@@ -238,6 +249,10 @@ public class FragmentMap
     public void onMapReady(GoogleMap googleMap){
         this.map = googleMap;
         clusterManager = new ClusterManager<>(getContext(), googleMap);
+        clusterManager.setRenderer(new CustomMapClusterRenderer<>(getContext(),map, clusterManager));
+        clusterManager.setAlgorithm(new ClusteringAlgorithm<PlaceCluster>());
+
+
         googleMap.setOnCameraIdleListener(clusterManager);
         googleMap.setOnMapClickListener(this);
         googleMap.setOnMarkerClickListener(this);
@@ -285,6 +300,10 @@ public class FragmentMap
         if (currentState == STATE_CIRCUIT) {
             Log.i("circuitTest", "showing circuit: " + activeCircuit.getId());
             showCircuit(activeCircuit.getId());
+        }
+
+        if (currentState == STATE_SINGLE) {
+            selectPlace(activePlaceId);
         }
     }
 
@@ -393,17 +412,30 @@ public class FragmentMap
     public boolean onMarkerClick(Marker marker) {
         String title = marker.getTitle();
 
-        //cluster
-        if (title == null) {
-            map.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                    marker.getPosition(), (float) Math.floor(map
-                            .getCameraPosition().zoom + 1)), 300,
-                    null);
+        if (currentState == STATE_SINGLE)  {
             return true;
         }
 
-        long id = Long.parseLong(title);
-        showPlaceInfo(id);
+        if (currentState == STATE_PLACES) {
+            //cluster
+            if (title == null) {
+                map.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                        marker.getPosition(), (float) Math.floor(map
+                                .getCameraPosition().zoom + 1)), 300,
+                        null);
+                return true;
+            }
+
+            long id = Long.parseLong(title);
+            showPlaceInfo(id);
+
+            return true;
+        }
+
+        if (currentState == STATE_CIRCUIT) {
+            //TODO
+            return true;
+        }
 
         return true;
     }
@@ -414,17 +446,58 @@ public class FragmentMap
     }
 
     public void selectPlace(Place place) {
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getPosition(), 16));
+        hideCurrentState();
 
-        Collection<Marker> markers = clusterManager.getMarkerCollection().getMarkers();
-        for (Marker marker : markers) {
-            //id is stored in marker title
-            if (marker.getTitle().equals(Long.toString(place.getId()))) {
-                map.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getPosition(), 14));
-            }
+        Log.i(TAG, "showing place: " + place.getName());
+
+        currentState = STATE_SINGLE;
+        activePlace = place;
+        activePlaceId = place.getId();
+
+        if (map!=null) {
+            map.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getPosition(), 16));
         }
-        //MarkerOptions markerOptions = new MarkerOptions().position(place.getPosition()).title(Long.toString(place.getId()));
-        //googleMap.addMarker(markerOptions);
+
+        MarkerOptions markerOptions = new MarkerOptions().position(place.getPosition()).title(Long.toString(place.getId()));
+        Marker marker = map.addMarker(markerOptions);
+
+        RelativeLayout placeDetail = getView().findViewById(R.id.placeLayout);
+        TextView tvName = placeDetail.findViewById(R.id.placeName);
+        Button closeButton = placeDetail.findViewById(R.id.button_closePlace);
+        Button detailButton = placeDetail.findViewById(R.id.button_detail);
+
+        closeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                closePlace();
+            }
+        });
+
+        final long id = place.getId();
+
+        detailButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ((MainActivity)getActivity()).showPlaceDetail(id);
+            }
+        });
+
+        tvName.setText(place.getName());
+
+        placeDetail.setVisibility(View.VISIBLE);
+
+        Log.i(TAG, "showing marker: " + marker.getId());
+    }
+
+    public void selectPlace(long placeId) {
+        hideCurrentState();
+        ShowPlaceAsyncTask task = new ShowPlaceAsyncTask(FragmentMap.this, AppDatabase.getDatabase(getContext().getApplicationContext()), placeId);
+        task.execute();
+    }
+
+    public void closePlace(){
+        hideCurrentState();
+        activateStatePlaces();
     }
 
     private void showPlaceInfo(long id) {
@@ -514,6 +587,9 @@ public class FragmentMap
             outState.putLong(SAVE_STATE_CIRCUIT, activeCircuit.getId());
             Log.i("circuitTest", "saving id: " + activeCircuit.getId());
         }
+        if (currentState == STATE_SINGLE) {
+            outState.putLong(SAVE_STATE_PLACE, activePlace.getId());
+        }
     }
 
     private  void addClusters(List<PlaceCluster> clusters){
@@ -538,13 +614,17 @@ public class FragmentMap
                 clusterManager.clearItems();
                 clusterManager.cluster();
             }
-            map.clear();
+            if (map != null) {
+                map.clear();
+            }
 
             filtersLayout.setVisibility(View.GONE);
         }
 
         if (currentState == STATE_CIRCUIT) {
-            map.clear();
+            if (map != null) {
+                map.clear();
+            }
             activeCircuit = null;
             if (circuitMarkers != null) {
                 circuitMarkers.clear();
@@ -552,6 +632,16 @@ public class FragmentMap
             }
             RelativeLayout circuitLayout = getView().findViewById(R.id.circuitLayout);
             circuitLayout.setVisibility(View.GONE);
+        }
+
+        if (currentState == STATE_SINGLE) {
+            if (map != null) {
+                map.clear();
+            }
+            activePlace = null;
+
+            RelativeLayout placeLayout = getView().findViewById(R.id.placeLayout);
+            placeLayout.setVisibility(View.GONE);
         }
     }
 
@@ -610,6 +700,8 @@ public class FragmentMap
 
     public void activateStatePlaces(){
         refreshMarkers();
+        //filtersLayout.setVisibility(View.VISIBLE);
+        setupFilters(getView());
         filtersLayout.setVisibility(View.VISIBLE);
         currentState = STATE_PLACES;
     }
@@ -677,6 +769,36 @@ public class FragmentMap
             final FragmentMap fragment = this.fragment.get();
             if (fragment != null) {
                 fragment.showCircuit(viewModel);
+            }
+        }
+    }
+
+    private static class ShowPlaceAsyncTask extends AsyncTask<Void, Void, Place> {
+
+        private WeakReference<FragmentMap> fragment;
+        private final AppDatabase mDb;
+        private long placeId;
+
+        public ShowPlaceAsyncTask(FragmentMap fragment, AppDatabase db, long id) {
+            this.fragment = new WeakReference<>(fragment);
+            this.mDb = db;
+            this.placeId = id;
+        }
+
+        @Override
+        protected Place doInBackground(final Void... params) {
+            Place place = mDb.place().selectByIdSynchronous(placeId);
+            Log.i(TAG, "selecting place by id: " + placeId);
+            Log.i(TAG, "place: " + place.getName());
+
+            return place;
+        }
+
+        @Override
+        protected void onPostExecute(Place place) {
+            final FragmentMap fragment = this.fragment.get();
+            if (fragment != null) {
+                fragment.selectPlace(place);
             }
         }
     }

@@ -11,6 +11,8 @@ import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.FrameLayout;
 
 import com.genius.petr.breeer.circuits.FragmentCircuits;
 import com.genius.petr.breeer.database.FragmentDb;
@@ -33,6 +35,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            FrameLayout fragmentLayout = findViewById(R.id.fragmentLayout);
+            fragmentLayout.setVisibility(View.INVISIBLE);
             switch (item.getItemId()) {
                 case R.id.navigation_map:
                     viewPager.setCurrentItem(0);
@@ -52,15 +56,30 @@ public class MainActivity extends AppCompatActivity {
     };
 
     public void showFragment(Fragment fragment) {
+        FrameLayout fragmentLayout = findViewById(R.id.fragmentLayout);
+        fragmentLayout.setVisibility(View.VISIBLE);
+
         FragmentManager manager = getSupportFragmentManager();
         manager.beginTransaction().replace(R.id.fragmentLayout, fragment).addToBackStack(null).commit();
     }
 
     public void showPlaceDetail(long id) {
-        Log.i(TAG, "showing place: " + id);
+        FrameLayout fragmentLayout = findViewById(R.id.fragmentLayout);
+        fragmentLayout.setVisibility(View.VISIBLE);
+
         FragmentManager manager = getSupportFragmentManager();
         manager.beginTransaction().replace(R.id.fragmentLayout, FragmentPlaceDetail.newInstance(id)).addToBackStack(null).commit();
         //viewPager.setVisibility(View.GONE);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (getSupportFragmentManager().getBackStackEntryCount() == 1) {
+            FrameLayout fragmentLayout = findViewById(R.id.fragmentLayout);
+            fragmentLayout.setVisibility(View.INVISIBLE);
+        }
+
+        super.onBackPressed();
     }
 
     //todo: make this solution cleaner

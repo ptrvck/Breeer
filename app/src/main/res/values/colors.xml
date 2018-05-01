@@ -5,6 +5,9 @@
     <color name="colorAccent">#FF4081</color>
     <color name="colorBackgroundLight">#FFFFFF</color>
 
+    <color name="colorWhite">#FFFFFF</color>
+    <color name="colorBlack">#000000</color>
+
     <color name="colorBeerAccent">#ffaf5f</color>
     <color name="colorFoodAccent">#d77d50</color>
     <color name="colorCoffeeAccent">#a58273</color>
@@ -14,5 +17,10 @@
     <color name="colorArtAccent">#7846a0</color>
     <color name="colorMiscAccent">#ff6666</color>
     <color name="colorMusicAccent">#ffb8d8</color>
+
+    <color name="colorMarkerDark">#000000</color>
+    <color name="colorMarkerLight">#FFFFFF</color>
+
+    <color name="colorTransparent">#00000000 </color>
 
 </resources>

@@ -8,6 +8,8 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -72,5 +74,18 @@ public class FragmentPlaceDetail extends Fragment {
         args.putLong(Place.COLUMN_ID, id);
         fragment.setArguments(args);
         return fragment;
+    }
+
+    private static final Animation dummyAnimation = new AlphaAnimation(1,1);
+    static{
+        dummyAnimation.setDuration(500);
+    }
+
+    @Override
+    public Animation onCreateAnimation(int transit, boolean enter, int nextAnim) {
+        if(!enter && getParentFragment() != null){
+            return dummyAnimation;
+        }
+        return super.onCreateAnimation(transit, enter, nextAnim);
     }
 }

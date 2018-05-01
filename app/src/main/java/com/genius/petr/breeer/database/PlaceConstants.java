@@ -15,6 +15,8 @@ import java.util.Map;
 public class PlaceConstants {
     public static final Map<Integer, String> CATEGORY_NAMES;
     public static final Map<Integer, Integer> CATEGORY_COLORS;
+    public static final Map<Integer, Integer> CATEGORY_ICONS;
+    public static final Map<Integer, Integer> CATEGORY_ICONS_BLACK;
     public static final List<Integer> CATEGORIES;
     static {
         List<Integer> categories = new ArrayList<>();
@@ -47,5 +49,30 @@ public class PlaceConstants {
         colorIds.put(7, R.color.colorMusicAccent);
         colorIds.put(8, R.color.colorArtAccent);
         CATEGORY_COLORS = Collections.unmodifiableMap(colorIds);
+
+        Map<Integer, Integer> iconIds = new HashMap<>();
+        iconIds.put(0, R.drawable.cat_area);
+        iconIds.put(1, R.drawable.cat_misc);
+        iconIds.put(2, R.drawable.cat_food);
+        iconIds.put(3, R.drawable.cat_nature);
+        iconIds.put(4, R.drawable.cat_coffee);
+        iconIds.put(5, R.drawable.cat_beer);
+        iconIds.put(6, R.drawable.cat_bar);
+        iconIds.put(7, R.drawable.cat_music);
+        iconIds.put(8, R.drawable.cat_art);
+        CATEGORY_ICONS = Collections.unmodifiableMap(iconIds);
+
+        Map<Integer, Integer> blackIconIds = new HashMap<>();
+        blackIconIds.put(0, R.drawable.cat_area_d);
+        blackIconIds.put(1, R.drawable.cat_misc_d);
+        blackIconIds.put(2, R.drawable.cat_food_d);
+        blackIconIds.put(3, R.drawable.cat_nature_d);
+        blackIconIds.put(4, R.drawable.cat_coffee_d);
+        blackIconIds.put(5, R.drawable.cat_beer_d);
+        blackIconIds.put(6, R.drawable.cat_bar_d);
+        blackIconIds.put(7, R.drawable.cat_music_d);
+        blackIconIds.put(8, R.drawable.cat_art_d);
+        CATEGORY_ICONS_BLACK= Collections.unmodifiableMap(blackIconIds);
+
     }
 }

@@ -1,18 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical" >
-    <TextView
-        android:id="@+id/place_item_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Špilas"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
+    android:orientation="vertical"
+    android:layout_marginBottom="10dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <View
+            android:layout_centerVertical="true"
+            style="@style/HeadlineDivider"
+            android:id="@+id/leftDivider"
+            android:layout_width="15dp"
+            android:layout_alignParentLeft="true"/>
+
+        <TextView
+            android:id="@+id/place_item_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Špilas"
+            android:textAppearance="@style/PlaceListPlaceTitle"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:layout_toRightOf="@id/leftDivider"/>
+
+        <View
+            android:layout_centerVertical="true"
+            style="@style/HeadlineDivider"
+            android:layout_toRightOf="@id/place_item_name"
+            android:minWidth="40dp" />
+    </RelativeLayout>
+
     <TextView
         android:id="@+id/place_item_id"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="25dp"
         android:text="3"
-        android:textAppearance="?android:attr/textAppearanceSmall" />
+        android:textAppearance="?android:attr/textAppearanceSmall"/>
+
 </LinearLayout>

@@ -57,6 +57,12 @@
 
     </RelativeLayout>
 
+    <include layout="@layout/view_place_map_detail"
+        android:id="@+id/placeLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"/>
+
     <FrameLayout
         android:id="@+id/place_essentials_frame"
         android:layout_width="match_parent"

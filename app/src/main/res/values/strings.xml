@@ -18,4 +18,5 @@
     <string name="cat_name_06">Bar</string>
     <string name="cat_name_07">Music</string>
     <string name="cat_name_08">Art</string>
+    <string name="place_categories_title">What are you looking for?</string>
 </resources>

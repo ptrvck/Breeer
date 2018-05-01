@@ -9,6 +9,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+
 import com.genius.petr.breeer.R;
 import com.genius.petr.breeer.database.Circuit;
 import com.genius.petr.breeer.database.Place;
@@ -44,6 +46,9 @@ public class PlacesListPagerAdapter extends PagerAdapter {
         int color = ResourcesCompat.getColor(context.getResources(), PlaceConstants.CATEGORY_COLORS.get(position), null);
         background.setBackgroundColor(color);
 
+        ImageView backgroundImage = layout.findViewById(R.id.backgroundImage);
+        backgroundImage.setImageResource(PlaceConstants.CATEGORY_ICONS_BLACK.get(position));
+
         RecyclerView recyclerView = layout.findViewById(R.id.list);
         PlaceAdapter placeAdapter = new PlaceAdapter(places, placeClickListener);
         recyclerView.setLayoutManager(new LinearLayoutManager(context));
@@ -51,10 +56,6 @@ public class PlacesListPagerAdapter extends PagerAdapter {
 
         collection.addView(layout);
         return layout;
-    }
-
-    public void callback(Circuit circuit){
-        Log.i("callbackTest", "from adapter");
     }
 
     @Override

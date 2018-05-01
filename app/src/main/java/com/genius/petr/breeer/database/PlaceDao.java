@@ -32,6 +32,9 @@ public interface PlaceDao {
     @Query("SELECT * FROM " + Place.TABLE_NAME + " WHERE " + Place.COLUMN_ID + " = :id")
     LiveData<Place> selectById(long id);
 
+    @Query("SELECT * FROM " + Place.TABLE_NAME + " WHERE " + Place.COLUMN_ID + " = :id")
+    Place selectByIdSynchronous(long id);
+
 
     @Query("SELECT * FROM " + Place.TABLE_NAME + " WHERE " + Place.COLUMN_CATEGORY + " = :category")
     List<Place> selectByCategory(long category);

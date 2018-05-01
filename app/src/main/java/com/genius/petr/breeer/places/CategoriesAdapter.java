@@ -1,6 +1,7 @@
 package com.genius.petr.breeer.places;
 
 import android.content.Context;
+import android.support.v4.content.res.ResourcesCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -67,7 +68,9 @@ public class CategoriesAdapter extends BaseAdapter {
             convertView = layoutInflater.inflate(R.layout.griditem_category, null);
         }
 
+
         final ImageView imageView = convertView.findViewById(R.id.iv_categoryImage);
+        imageView.setImageResource(PlaceConstants.CATEGORY_ICONS.get(position));
         final TextView nameTextView = convertView.findViewById(R.id.tv_categoryName);
 
         //imageView.setImageResource(category.getImageResource());

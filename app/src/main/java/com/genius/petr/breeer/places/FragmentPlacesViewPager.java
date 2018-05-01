@@ -2,6 +2,7 @@ package com.genius.petr.breeer.places;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
@@ -30,14 +31,14 @@ public class FragmentPlacesViewPager extends Fragment{
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_circuits, container, false);
+        View view = inflater.inflate(R.layout.fragment_places_viewpager, container, false);
 
         Bundle args = getArguments();
         if(args != null) {
             position = args.getInt(ARGUMENT_CATEGORY);
         }
 
-        viewPager = view.findViewById(R.id.viewpager_circuits);
+        viewPager = view.findViewById(R.id.viewpager_places);
 
         AppDatabase db = AppDatabase.getDatabase(getActivity().getApplication());
         ShowPlacesAsyncTask task = new ShowPlacesAsyncTask(this, db);
@@ -61,18 +62,15 @@ public class FragmentPlacesViewPager extends Fragment{
     }
 
     private void showViewPager(PlacesListViewModel viewModel) {
-        PlacesListPagerAdapter adapter = new PlacesListPagerAdapter(getContext(), viewModel, getPlaceClickListener()){
-            @Override public void callback(Circuit circuit){
-                MainActivity activity = (MainActivity)getActivity();
-                activity.showCircuitOnMap(circuit.getId());
-                Log.i("callbackTest", "from fragment");
-            }
-        };
+        PlacesListPagerAdapter adapter = new PlacesListPagerAdapter(getContext(), viewModel, getPlaceClickListener());
         viewPager.setAdapter(adapter);
         viewPager.setPageTransformer(true, new PlacesListPagerTransformer());
         //todo: place position in view model?
         viewPager.setCurrentItem(position);
         viewPager.setVisibility(View.VISIBLE);
+
+        TabLayout tabLayout = getView().findViewById(R.id.sliding_tabs);
+        tabLayout.setupWithViewPager(viewPager);
     }
 
     private static class ShowPlacesAsyncTask extends AsyncTask<Void, Void, PlacesListViewModel> {
