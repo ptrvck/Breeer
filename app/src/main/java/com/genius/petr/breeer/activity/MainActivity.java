@@ -1,6 +1,9 @@
 package com.genius.petr.breeer.activity;
 
 import android.annotation.SuppressLint;
+import android.content.res.Configuration;
+import android.content.res.Resources;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.internal.BottomNavigationItemView;
@@ -9,6 +12,7 @@ import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,6 +27,7 @@ import com.genius.petr.breeer.places.FragmentPlaceDetail;
 import com.genius.petr.breeer.R;
 
 import java.lang.reflect.Field;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -56,17 +61,11 @@ public class MainActivity extends AppCompatActivity {
     };
 
     public void showFragment(Fragment fragment) {
-        FrameLayout fragmentLayout = findViewById(R.id.fragmentLayout);
-        fragmentLayout.setVisibility(View.VISIBLE);
-
         FragmentManager manager = getSupportFragmentManager();
         manager.beginTransaction().replace(R.id.fragmentLayout, fragment).addToBackStack(null).commit();
     }
 
     public void showPlaceDetail(long id) {
-        FrameLayout fragmentLayout = findViewById(R.id.fragmentLayout);
-        fragmentLayout.setVisibility(View.VISIBLE);
-
         FragmentManager manager = getSupportFragmentManager();
         manager.beginTransaction().replace(R.id.fragmentLayout, FragmentPlaceDetail.newInstance(id)).addToBackStack(null).commit();
         //viewPager.setVisibility(View.GONE);
@@ -104,6 +103,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        String languageToLoad  = getResources().getString(R.string.langENG);
+        Locale locale = new Locale(languageToLoad);
+        setLocale(locale);
+
         setContentView(R.layout.activity_main);
         BottomNavigationView navigation = findViewById(R.id.navigation);
         disableShiftMode(navigation);
@@ -118,6 +122,23 @@ public class MainActivity extends AppCompatActivity {
         adapter.addFragment(new FragmentPlaceCategories(), "Places");
         adapter.addFragment(new FragmentDb(), "Database");
         viewPager.setAdapter(adapter);
+    }
+
+    @SuppressWarnings("deprecation")
+    private void setLocale(Locale locale){
+        Resources resources = getResources();
+        Configuration configuration = resources.getConfiguration();
+        DisplayMetrics displayMetrics = resources.getDisplayMetrics();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1){
+            configuration.setLocale(locale);
+        } else{
+            configuration.locale=locale;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N){
+            getApplicationContext().createConfigurationContext(configuration);
+        } else {
+            resources.updateConfiguration(configuration,displayMetrics);
+        }
     }
 
     @SuppressLint("RestrictedApi")
@@ -139,5 +160,10 @@ public class MainActivity extends AppCompatActivity {
         } catch (IllegalAccessException e) {
             Log.e("BNVHelper", "Unable to change value of shift mode", e);
         }
+    }
+
+    public void secondLayerFragmentSelected() {
+        FrameLayout fragmentLayout = findViewById(R.id.fragmentLayout);
+        fragmentLayout.setVisibility(View.VISIBLE);
     }
 }

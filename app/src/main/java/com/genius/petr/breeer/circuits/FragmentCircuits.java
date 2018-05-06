@@ -2,6 +2,7 @@ package com.genius.petr.breeer.circuits;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
@@ -12,6 +13,10 @@ import com.genius.petr.breeer.R;
 import com.genius.petr.breeer.activity.MainActivity;
 import com.genius.petr.breeer.database.AppDatabase;
 import com.genius.petr.breeer.database.Circuit;
+import com.genius.petr.breeer.places.PlacesListPagerAdapter;
+import com.genius.petr.breeer.places.PlacesListPagerTransformer;
+import com.genius.petr.breeer.places.PlacesListViewModel;
+
 import java.lang.ref.WeakReference;
 import java.util.List;
 
@@ -22,6 +27,7 @@ import java.util.List;
 public class FragmentCircuits extends Fragment {
 
     private ViewPager viewPager;
+    private TabLayout tabLayout;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -45,8 +51,13 @@ public class FragmentCircuits extends Fragment {
             }
         };
         viewPager.setAdapter(adapter);
-        viewPager.setVisibility(View.VISIBLE);
+        viewPager.setPageTransformer(true, new CircuitsPagerTransformer());
+
+        tabLayout = getView().findViewById(R.id.sliding_tabs);
+        tabLayout.setupWithViewPager(viewPager, false);
     }
+
+
 
     private static class ShowCircuitsAsyncTask extends AsyncTask<Void, Void, CircuitListViewModel> {
 

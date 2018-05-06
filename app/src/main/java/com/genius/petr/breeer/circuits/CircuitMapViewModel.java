@@ -25,11 +25,13 @@ public class CircuitMapViewModel {
     private List<LatLng> path;
     private String name;
     private long id;
+    private int type;
 
     public CircuitMapViewModel(AppDatabase db, long id) {
         CircuitBase circuit = db.circuit().selectById(id);
         name = circuit.getName();
         this.id = circuit.getId();
+        this.type = circuit.getType();
 
         stops = db.circuit().getStopsOfCircuit(id);
         List<CircuitNode> nodes = db.circuit().getNodesOfCircuit(id);
@@ -60,5 +62,9 @@ public class CircuitMapViewModel {
 
     public long getId() {
         return id;
+    }
+
+    public int getType() {
+        return type;
     }
 }

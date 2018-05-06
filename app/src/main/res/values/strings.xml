@@ -19,4 +19,12 @@
     <string name="cat_name_07">Music</string>
     <string name="cat_name_08">Art</string>
     <string name="place_categories_title">What are you looking for?</string>
+
+
+    <string name="dummyLong">Lacinia mi torquent adipiscing fermentum nunc bibendum leo convallis fermentum a sociosqu habitant ligula proin a a purus consectetur lorem vestibulum urna mollis vestibulum ad mi blandit. Adipiscing ullamcorper a quam elementum a scelerisque quis id mus nec auctor enim at condimentum purus facilisi elementum scelerisque nisl.</string>
+    <string name="dummySuperLong">A elit mattis lobortis consectetur suspendisse placerat odio ultricies volutpat adipiscing scelerisque curabitur parturient vulputate torquent cras pretium a. Volutpat egestas eu sociosqu metus sociosqu adipiscing sagittis varius vehicula a nulla arcu suscipit rutrum ligula condimentum ornare congue congue morbi ante suspendisse dignissim facilisis laoreet diam integer molestie. Gravida hac nullam tortor parturient fusce a proin orci ullamcorper nascetur imperdiet primis adipiscing ullamcorper a vestibulum pulvinar leo scelerisque a a purus. A adipiscing torquent ullamcorper a ac id a dolor taciti elementum ullamcorper parturient fermentum vestibulum per penatibus a a hac aliquet vestibulum a tristique fringilla platea adipiscing ullamcorper ipsum. Id quisque libero parturient a ullamcorper a quis facilisis nascetur massa vestibulum gravida vivamus eleifend a scelerisque a.
+
+Imperdiet volutpat quis a pharetra a in gravida consectetur suspendisse eget a habitasse integer mollis magna arcu vivamus imperdiet nostra adipiscing ullamcorper id. Litora a a fusce bibendum litora nec urna egestas parturient imperdiet dui nec ridiculus vehicula netus parturient auctor a orci adipiscing suspendisse tellus pretium nulla purus consequat duis. Varius condimentum ipsum aliquam condimentum eros urna litora est viverra ac feugiat metus congue per sociis a. Quis ipsum curabitur in congue nisl tristique mauris nascetur mi sagittis pharetra litora scelerisque vitae mauris. Platea parturient scelerisque pretium conubia adipiscing ut ullamcorper a metus vivamus himenaeos a consectetur ac vestibulum dis vel sem euismod a eu. Parturient vestibulum ridiculus a a vulputate cum facilisis suscipit a fusce a suspendisse at cursus placerat urna curae parturient a cum scelerisque nibh a.</string>
+    <string name="langENG">en</string>
+
 </resources>

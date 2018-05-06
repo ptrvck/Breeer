@@ -17,6 +17,8 @@ public class PlaceConstants {
     public static final Map<Integer, Integer> CATEGORY_COLORS;
     public static final Map<Integer, Integer> CATEGORY_ICONS;
     public static final Map<Integer, Integer> CATEGORY_ICONS_BLACK;
+    public static final Map<Integer, Integer> CATEGORY_MARKERS;
+    public static final Map<Integer, Integer> CATEGORY_MARKERS_ACTIVE;
     public static final List<Integer> CATEGORIES;
     static {
         List<Integer> categories = new ArrayList<>();
@@ -72,7 +74,32 @@ public class PlaceConstants {
         blackIconIds.put(6, R.drawable.cat_bar_d);
         blackIconIds.put(7, R.drawable.cat_music_d);
         blackIconIds.put(8, R.drawable.cat_art_d);
-        CATEGORY_ICONS_BLACK= Collections.unmodifiableMap(blackIconIds);
+        CATEGORY_ICONS_BLACK = Collections.unmodifiableMap(blackIconIds);
+
+        Map<Integer, Integer> markersIds = new HashMap<>();
+        markersIds.put(0, R.drawable.marker_area);
+        markersIds.put(1, R.drawable.marker_misc);
+        markersIds.put(2, R.drawable.marker_food);
+        markersIds.put(3, R.drawable.marker_nature);
+        markersIds.put(4, R.drawable.marker_coffee);
+        markersIds.put(5, R.drawable.marker_beer);
+        markersIds.put(6, R.drawable.marker_bar);
+        markersIds.put(7, R.drawable.marker_music);
+        markersIds.put(8, R.drawable.marker_art);
+        CATEGORY_MARKERS = Collections.unmodifiableMap(markersIds);
+
+        Map<Integer, Integer> markersActiveIds = new HashMap<>();
+        markersActiveIds.put(0, R.drawable.marker_area_active);
+        markersActiveIds.put(1, R.drawable.marker_misc_active);
+        markersActiveIds.put(2, R.drawable.marker_food_active);
+        markersActiveIds.put(3, R.drawable.marker_nature_active);
+        markersActiveIds.put(4, R.drawable.marker_coffee_active);
+        markersActiveIds.put(5, R.drawable.marker_beer_active);
+        markersActiveIds.put(6, R.drawable.marker_bar_active);
+        markersActiveIds.put(7, R.drawable.marker_music_active);
+        markersActiveIds.put(8, R.drawable.marker_art_active);
+        CATEGORY_MARKERS_ACTIVE = Collections.unmodifiableMap(markersActiveIds);
+
 
     }
 }

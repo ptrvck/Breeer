@@ -1,18 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/tv_name"
-        android:text="CircuitName"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+    <ImageView
+        android:id="@+id/backgroundImage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingBottom="40dp"
+        app:srcCompat="@drawable/bg_circuit"/>
+
+    <RelativeLayout
+        android:id="@+id/circuitHeadline"
+        android:layout_width="match_parent"
+        android:layout_height="45sp"
+        android:layout_alignParentTop="true"
+        android:layout_marginBottom="15dp">
+        <View
+            android:layout_centerVertical="true"
+            style="@style/HeadlineDividerDark"
+            android:id="@+id/leftDivider"
+            android:layout_width="15dp"
+            android:layout_alignParentLeft="true"/>
+        <TextView
+            android:id="@+id/tv_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:text="Short Circuit"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            style="@style/CircuitTitle"
+            android:layout_toRightOf="@id/leftDivider"/>
+        <View
+            android:layout_centerVertical="true"
+            style="@style/HeadlineDividerDark"
+            android:id="@+id/rightDivider"
+            android:layout_toRightOf="@id/tv_name"
+            android:minWidth="40dp" />
+    </RelativeLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/circuitHeadline"
+        android:layout_above="@id/button_startCircuit"
+        android:paddingLeft="25dp"
+        android:paddingRight="25dp">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/tv_description"
+            style="@style/BaseTextDescription"
+            android:text="@string/dummySuperLong"/>
+    </ScrollView>
 
     <Button
         android:id="@+id/button_startCircuit"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
-</LinearLayout>
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:text="Start circuit"
+        android:background="@drawable/rounded_button"
+        style="@style/buttonStyle"
+        android:layout_margin="20dp"/>
+</RelativeLayout>

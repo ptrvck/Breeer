@@ -26,4 +26,14 @@ public class Circuit {
     public String getName() {
         return circuitBase.getName();
     }
+
+    @Ignore
+    public String getDescription() {
+        return circuitBase.getDescription();
+    }
+
+    @Ignore
+    public int getType() {
+        return circuitBase.getType();
+    }
 }

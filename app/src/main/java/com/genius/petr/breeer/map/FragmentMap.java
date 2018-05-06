@@ -5,7 +5,9 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Point;
+import android.graphics.PorterDuff;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -46,23 +48,33 @@ import com.genius.petr.breeer.database.CircuitNode;
 import com.genius.petr.breeer.database.Place;
 import com.genius.petr.breeer.database.PlaceConstants;
 import com.genius.petr.breeer.places.FragmentPlaceEssentials;
+import com.genius.petr.breeer.places.FragmentPlaces;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.maps.android.MarkerManager;
+import com.google.maps.android.clustering.Cluster;
 import com.google.maps.android.clustering.ClusterManager;
 import com.google.maps.android.clustering.algo.Algorithm;
 import com.google.maps.android.clustering.algo.NonHierarchicalDistanceBasedAlgorithm;
+
+import org.w3c.dom.Text;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -75,7 +87,8 @@ import java.util.List;
 
 public class FragmentMap
         extends Fragment
-        implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, GoogleMap.OnMapClickListener {
+        implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener,
+        GoogleMap.OnMapClickListener, GoogleMap.OnCameraMoveStartedListener {
 
     private static final String TAG = "mapFragmentLog";
     private static final String PLACE_ESSENTIALS_TAG = "placeEssentialsFragment";
@@ -91,7 +104,9 @@ public class FragmentMap
     private List<Marker> circuitMarkers;
     private CircuitMapViewModel activeCircuit;
     private Place activePlace;
+    private Marker activeMarker = null;
     private long activePlaceId = -1;
+    private float currentZoom = -1;
 
     private LocationRequest mLocationRequest;
     private FusedLocationProviderClient mFusedLocationClient;
@@ -248,14 +263,32 @@ public class FragmentMap
     @Override
     public void onMapReady(GoogleMap googleMap){
         this.map = googleMap;
+
+        try {
+            // Customise the styling of the base map using a JSON object defined
+            // in a raw resource file.
+            boolean success = googleMap.setMapStyle(
+                    MapStyleOptions.loadRawResourceStyle(
+                            getContext(), R.raw.style_json));
+
+            if (!success) {
+                Log.e(TAG, "Style parsing failed.");
+            }
+        } catch (Resources.NotFoundException e) {
+            Log.e(TAG, "Can't find style. Error: ", e);
+        }
+
+
+        map.moveCamera( CameraUpdateFactory.newLatLngZoom(new LatLng(49.19522, 16.60796) , 14.0f) );
+
         clusterManager = new ClusterManager<>(getContext(), googleMap);
         clusterManager.setRenderer(new CustomMapClusterRenderer<>(getContext(),map, clusterManager));
         clusterManager.setAlgorithm(new ClusteringAlgorithm<PlaceCluster>());
 
-
-        googleMap.setOnCameraIdleListener(clusterManager);
-        googleMap.setOnMapClickListener(this);
-        googleMap.setOnMarkerClickListener(this);
+        map.setOnCameraIdleListener(clusterManager);
+        map.setOnMapClickListener(this);
+        map.setOnMarkerClickListener(this);
+        map.setOnCameraMoveStartedListener(this);
 
         mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(2000); // two minute interval
@@ -306,6 +339,7 @@ public class FragmentMap
             selectPlace(activePlaceId);
         }
     }
+
 
 
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
@@ -408,6 +442,7 @@ public class FragmentMap
 
     };
 
+    /*
     @Override
     public boolean onMarkerClick(Marker marker) {
         String title = marker.getTitle();
@@ -417,19 +452,27 @@ public class FragmentMap
         }
 
         if (currentState == STATE_PLACES) {
+            Log.i(TAG, "onMarkerClick");
             //cluster
-            if (title == null) {
+            if (marker.getTitle() == null) {
+                hidePlaceInfo();
                 map.animateCamera(CameraUpdateFactory.newLatLngZoom(
                         marker.getPosition(), (float) Math.floor(map
                                 .getCameraPosition().zoom + 1)), 300,
                         null);
                 return true;
+            } else {
+                if (marker == activeMarker) {
+                    return true;
+                }
+                unselectActiveMarker();
+                long id = Long.parseLong(marker.getTitle());
+                showPlaceInfo(id);
+                int category = Integer.parseInt(marker.getSnippet());
+                marker.setIcon(MapUtils.bitmapDescriptorFromVector(getContext(), PlaceConstants.CATEGORY_MARKERS_ACTIVE.get(category)));
+                activeMarker = marker;
+                return true;
             }
-
-            long id = Long.parseLong(title);
-            showPlaceInfo(id);
-
-            return true;
         }
 
         if (currentState == STATE_CIRCUIT) {
@@ -439,6 +482,52 @@ public class FragmentMap
 
         return true;
     }
+    */
+
+    public boolean onMarkerClick(Marker marker) {
+        String title = marker.getTitle();
+
+        if (currentState == STATE_SINGLE)  {
+            return true;
+        }
+
+        if (currentState == STATE_PLACES) {
+            Log.i(TAG, "onMarkerClick");
+            //cluster
+            if (marker.getTitle() == null) {
+                hidePlaceInfo();
+                map.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                        marker.getPosition(), (float) Math.floor(map
+                                .getCameraPosition().zoom + 1)), 300,
+                        null);
+                return true;
+            } else {
+                long id = Long.parseLong(marker.getTitle());
+                selectPlace(id);
+                return true;
+            }
+        }
+
+        if (currentState == STATE_CIRCUIT) {
+            //TODO
+            return true;
+        }
+
+        return true;
+    }
+
+
+    @Override
+    public void onCameraMoveStarted(int reason) {
+        CameraPosition cameraPosition = map.getCameraPosition();
+        float zoom = cameraPosition.zoom;
+        if (zoom != currentZoom) {
+            currentZoom = zoom;
+            hidePlaceInfo();
+        }
+    }
+
+
 
     @Override
     public void onMapClick(LatLng latLng) {
@@ -458,35 +547,46 @@ public class FragmentMap
             map.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getPosition(), 16));
         }
 
-        MarkerOptions markerOptions = new MarkerOptions().position(place.getPosition()).title(Long.toString(place.getId()));
-        Marker marker = map.addMarker(markerOptions);
+        MarkerOptions markerOptions = new MarkerOptions().position(place.getPosition()).title(Long.toString(place.getId()))
+                .icon(MapUtils.bitmapDescriptorFromVector(getContext(), PlaceConstants.CATEGORY_MARKERS_ACTIVE.get(place.getCategory())));
 
-        RelativeLayout placeDetail = getView().findViewById(R.id.placeLayout);
-        TextView tvName = placeDetail.findViewById(R.id.placeName);
-        Button closeButton = placeDetail.findViewById(R.id.button_closePlace);
-        Button detailButton = placeDetail.findViewById(R.id.button_detail);
+        if(map!=null) {
+            Marker marker = map.addMarker(markerOptions);
 
-        closeButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                closePlace();
-            }
-        });
+            RelativeLayout placeDetail = getView().findViewById(R.id.placeLayout);
+            TextView tvName = placeDetail.findViewById(R.id.placeName);
+            TextView tvCategory = placeDetail.findViewById(R.id.placeCategory);
+            TextView tvDescription = placeDetail.findViewById(R.id.placeDescription);
+            Button closeButton = placeDetail.findViewById(R.id.button_closePlace);
+            Button detailButton = placeDetail.findViewById(R.id.button_detail);
 
-        final long id = place.getId();
+            closeButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    closePlace();
+                }
+            });
 
-        detailButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                ((MainActivity)getActivity()).showPlaceDetail(id);
-            }
-        });
+            final long id = place.getId();
 
-        tvName.setText(place.getName());
+            detailButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    ((MainActivity) getActivity()).showPlaceDetail(id);
+                }
+            });
 
-        placeDetail.setVisibility(View.VISIBLE);
+            tvName.setText(place.getName());
+            tvCategory.setText(PlaceConstants.CATEGORY_NAMES.get(place.getCategory()));
+            tvDescription.setText(place.getDescription());
+            int color = ContextCompat.getColor(getContext(), PlaceConstants.CATEGORY_COLORS.get(place.getCategory()));
+            tvCategory.setTextColor(color);
+            detailButton.getBackground().setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
 
-        Log.i(TAG, "showing marker: " + marker.getId());
+            placeDetail.setVisibility(View.VISIBLE);
+
+            Log.i(TAG, "showing marker: " + marker.getId());
+        }
     }
 
     public void selectPlace(long placeId) {
@@ -515,11 +615,16 @@ public class FragmentMap
         transaction.commit();
     }
 
+    private void unselectActiveMarker(){
+        if (activeMarker != null) {
+            int category = Integer.parseInt(activeMarker.getSnippet());
+            activeMarker.setIcon(MapUtils.bitmapDescriptorFromVector(getContext(), PlaceConstants.CATEGORY_MARKERS.get(category)));
+            activeMarker = null;
+        }
+    }
+
     private void hidePlaceInfo(){
-        Display display = getActivity().getWindowManager().getDefaultDisplay();
-        Point size = new Point();
-        display.getSize(size);
-        final int width = size.x;
+        unselectActiveMarker();
 
         final FrameLayout fragmentLayout = getView().findViewById(R.id.place_essentials_frame);
 
@@ -529,6 +634,11 @@ public class FragmentMap
         if (fragment == null) {
             return;
         }
+
+        Display display = getActivity().getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        final int width = size.x;
 
         TranslateAnimation trans=new TranslateAnimation(0, -width, 0,0);
         trans.setDuration(150);
@@ -555,6 +665,7 @@ public class FragmentMap
     @Override
     public void onResume() {
         super.onResume();
+        activeMarker = null;
         mMapView.onResume();
     }
 
@@ -648,11 +759,20 @@ public class FragmentMap
     private void showCircuit(CircuitMapViewModel viewModel) {
 
         circuitMarkers = new ArrayList<>();
+        int color = getResources().getColor(PlaceConstants.CATEGORY_COLORS.get(viewModel.getType()));
+        BitmapDescriptor markerIcon = MapUtils.bitmapDescriptorFromVector(FragmentMap.this.getContext(), R.drawable.marker_circuit, color);
+
+
+
+
         for (Place place : viewModel.getStops()) {
-            MarkerOptions markerOptions = new MarkerOptions().position(place.getPosition()).title(Long.toString(place.getId()));
+            MarkerOptions markerOptions = new MarkerOptions().position(place.getPosition()).title(Long.toString(place.getId())).icon(markerIcon).anchor(0.5f, 0.5f);
             Marker marker = map.addMarker(markerOptions);
             circuitMarkers.add(marker);
         }
+
+
+
 
         List<LatLng> path = viewModel.getPath();
 
@@ -660,11 +780,19 @@ public class FragmentMap
             return;
         }
 
+        LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
         PolylineOptions polylineOptions = new PolylineOptions();
 
         for (LatLng node : path) {
             polylineOptions.add(node);
+            boundsBuilder.include(node);
         }
+
+        LatLngBounds bounds = boundsBuilder.build();
+        int width = getResources().getDisplayMetrics().widthPixels;
+        int padding = (int)(width*0.2); // offset from edges of the map in pixels
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+        map.animateCamera(cameraUpdate);
 
 
         RelativeLayout circuitLayout = getView().findViewById(R.id.circuitLayout);

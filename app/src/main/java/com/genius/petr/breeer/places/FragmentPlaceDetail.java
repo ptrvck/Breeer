@@ -28,6 +28,10 @@ public class FragmentPlaceDetail extends Fragment {
 
     private TextView tvPlaceName;
     private TextView tvPlaceType;
+    private TextView tvDescription;
+    private TextView tvPhone;
+    private TextView tvWeb;
+
     private long id;
 
     @Override
@@ -42,6 +46,9 @@ public class FragmentPlaceDetail extends Fragment {
         View view = inflater.inflate(R.layout.fragment_place_detail, container, false);
         this.tvPlaceName = view.findViewById(R.id.tv_placeName);
         this.tvPlaceType = view.findViewById(R.id.tv_placeType);
+        this.tvDescription = view.findViewById(R.id.tv_description);
+        this.tvPhone = view.findViewById(R.id.tv_phone);
+        this.tvWeb = view.findViewById(R.id.tv_web);
 
         viewModel= ViewModelProviders.of(this,
                 new PlaceDetailViewModelFactory(this.getActivity().getApplication(), id))
@@ -52,6 +59,9 @@ public class FragmentPlaceDetail extends Fragment {
             public void onChanged(@Nullable Place place) {
                 tvPlaceName.setText(place.getName());
                 tvPlaceType.setText(PlaceConstants.CATEGORY_NAMES.get(place.getCategory()));
+                tvDescription.setText(place.getDescription());
+                tvPhone.setText(place.getPhone());
+                tvWeb.setText(place.getWeb());
             }
         });
 
@@ -87,5 +97,14 @@ public class FragmentPlaceDetail extends Fragment {
             return dummyAnimation;
         }
         return super.onCreateAnimation(transit, enter, nextAnim);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        MainActivity activity = ((MainActivity)getActivity());
+        if (activity!=null) {
+            activity.secondLayerFragmentSelected();
+        }
     }
 }
