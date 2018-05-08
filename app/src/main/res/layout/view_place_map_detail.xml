@@ -11,15 +11,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Cattani"
-        style="@style/CircuitTitle"/>
+        style="@style/MainTitle"/>
     <TextView
         android:id="@+id/placeCategory"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="food"
         style="@style/CategoryTitle"
-        android:layout_below="@id/placeName"
-        android:layout_marginBottom="10dp"/>
+        android:layout_below="@id/placeName"/>
 
     <TextView
         android:id="@+id/placeDescription"

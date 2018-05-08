@@ -78,6 +78,22 @@ public class MainActivity extends AppCompatActivity {
             fragmentLayout.setVisibility(View.INVISIBLE);
         }
 
+        if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
+            //return to map
+            if (viewPager.getCurrentItem() != 0) {
+                BottomNavigationView navigation = findViewById(R.id.navigation);
+                navigation.setSelectedItemId(R.id.navigation_map);
+                return;
+            } else {
+                BreeerViewPagerAdapter adapter = (BreeerViewPagerAdapter)viewPager.getAdapter();
+                FragmentMap mapFragment = (FragmentMap)adapter.getFragment(0);
+                boolean handled = mapFragment.backPressed();
+                if (handled) {
+                    return;
+                }
+            }
+        }
+
         super.onBackPressed();
     }
 

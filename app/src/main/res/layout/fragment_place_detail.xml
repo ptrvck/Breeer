@@ -1,57 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorBackgroundLight"
-    android:padding="20dp">
+    android:padding="30dp">
 
-    <LinearLayout
+    <android.support.v7.widget.AppCompatImageButton
+        android:id="@+id/upButton"
+        android:layout_width="25dp"
+        android:layout_height="20dp"
+        android:scaleType="fitCenter"
+        android:layout_marginBottom="10dp"
+        app:srcCompat="@drawable/back"
+        android:background="@color/colorTransparent"/>
+
+    <TextView
+        android:id="@+id/tv_placeName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Name"
+        style="@style/MainTitle"
+        android:layout_below="@id/upButton"/>
+
+    <TextView
+        android:id="@+id/tv_placeType"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/CategoryTitle"
+        android:text="Type"
+        android:layout_below="@id/tv_placeName" />
+
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_below="@id/tv_placeType"
+        android:layout_above="@id/button_showOnMap">
 
-        <TextView
-            android:id="@+id/tv_placeName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Name"
-            android:textAppearance="@style/TextAppearance.AppCompat.Headline"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/tv_placeType"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Type"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_placeName" />
-
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/tv_description"
-            android:text="Desc"/>
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/tv_description"
+                android:text="Desc"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/tv_phone"
-            android:autoLink="phone"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/tv_phone"
+                android:autoLink="phone"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/tv_web"
-            android:autoLink="web"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/tv_web"
+                android:autoLink="web"/>
+        </LinearLayout>
+    </ScrollView>
 
-        <Button
-            android:id="@+id/button_showOnMap"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-    </LinearLayout>
 
-</ScrollView>
+
+    <Button
+        android:id="@+id/button_showOnMap"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:text="Show on map"
+        android:background="@drawable/rounded_button"
+        style="@style/buttonStyle"/>
+
+</RelativeLayout>

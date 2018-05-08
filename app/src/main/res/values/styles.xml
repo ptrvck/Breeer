@@ -32,9 +32,14 @@
     <style name="CategoryTitle">
         <item name="android:textStyle">bold</item>
         <item name="android:textSize">16sp</item>
+        <item name="android:layout_marginBottom">10dp</item>
     </style>
 
-    <style name="CircuitTitle">
+    <style name="JohnnySplashTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@drawable/johnny_splash</item>
+    </style>
+
+    <style name="MainTitle">
         <item name="android:textStyle">bold</item>
         <item name="android:textSize">35sp</item>
         <item name="android:textColor">@color/colorBlack</item>
@@ -56,8 +61,11 @@
         <item name="android:textColor">#FFFFFF</item>
         <item name="android:textSize">14sp</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:paddingLeft">40dp</item>
-        <item name="android:paddingRight">40dp</item>
+        <item name="android:paddingLeft">30dp</item>
+        <item name="android:paddingRight">30dp</item>
+        <item name="android:paddingBottom">12dp</item>
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:minHeight">0dp</item>
     </style>
 
 </resources>

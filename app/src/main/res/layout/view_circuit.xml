@@ -33,7 +33,7 @@
             android:text="Short Circuit"
             android:paddingLeft="10dp"
             android:paddingRight="10dp"
-            style="@style/CircuitTitle"
+            style="@style/MainTitle"
             android:layout_toRightOf="@id/leftDivider"/>
         <View
             android:layout_centerVertical="true"

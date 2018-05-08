@@ -3,6 +3,7 @@ package com.genius.petr.breeer.map;
 import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -25,6 +26,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.Button;
@@ -33,7 +35,9 @@ import android.widget.CompoundButton;
 import android.widget.FrameLayout;
 import android.widget.GridLayout;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -88,7 +92,7 @@ import java.util.List;
 public class FragmentMap
         extends Fragment
         implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener,
-        GoogleMap.OnMapClickListener, GoogleMap.OnCameraMoveStartedListener {
+        GoogleMap.OnMapClickListener, GoogleMap.OnCameraMoveStartedListener, GoogleMap.OnMapLoadedCallback {
 
     private static final String TAG = "mapFragmentLog";
     private static final String PLACE_ESSENTIALS_TAG = "placeEssentialsFragment";
@@ -125,6 +129,9 @@ public class FragmentMap
     public View onCreateView(LayoutInflater inflater, ViewGroup container, final Bundle savedInstanceState) {
         Log.i("Breeer", "OnCreateView called");
         View rootView = inflater.inflate(R.layout.fragment_map, container, false);
+        rootView.findViewById(R.id.loadingOverlay).setVisibility(View.VISIBLE);
+        ProgressBar progressBar = rootView.findViewById(R.id.progressBar);
+        progressBar.getIndeterminateDrawable().setColorFilter(ContextCompat.getColor(getContext(), R.color.colorLightGray), PorterDuff.Mode.SRC_IN );
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getContext());
 
@@ -263,6 +270,7 @@ public class FragmentMap
     @Override
     public void onMapReady(GoogleMap googleMap){
         this.map = googleMap;
+        map.setOnMapLoadedCallback(this);
 
         try {
             // Customise the styling of the base map using a JSON object defined
@@ -338,6 +346,14 @@ public class FragmentMap
         if (currentState == STATE_SINGLE) {
             selectPlace(activePlaceId);
         }
+
+
+    }
+
+    @Override
+    public void onMapLoaded() {
+        View overlay = getView().findViewById(R.id.loadingOverlay);
+        overlay.setVisibility(View.GONE);
     }
 
 
@@ -528,6 +544,33 @@ public class FragmentMap
     }
 
 
+    private void animateLatLngZoom(LatLng latlng, int reqZoom, int offsetX, int offsetY) {
+
+        if (map == null) {
+            return;
+        }
+
+        // Save current zoom
+        float originalZoom = map.getCameraPosition().zoom;
+
+        // Move temporarily camera zoom
+        map.moveCamera(CameraUpdateFactory.zoomTo(reqZoom));
+
+        Point pointInScreen = map.getProjection().toScreenLocation(latlng);
+
+        Point newPoint = new Point();
+        newPoint.x = pointInScreen.x + offsetX;
+        newPoint.y = pointInScreen.y + offsetY;
+
+        LatLng newCenterLatLng = map.getProjection().fromScreenLocation(newPoint);
+
+        // Restore original zoom
+        map.moveCamera(CameraUpdateFactory.zoomTo(originalZoom));
+
+        // Animate a camera with new latlng center and required zoom.
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(newCenterLatLng, reqZoom));
+
+    }
 
     @Override
     public void onMapClick(LatLng latLng) {
@@ -543,17 +586,13 @@ public class FragmentMap
         activePlace = place;
         activePlaceId = place.getId();
 
-        if (map!=null) {
-            map.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getPosition(), 16));
-        }
-
         MarkerOptions markerOptions = new MarkerOptions().position(place.getPosition()).title(Long.toString(place.getId()))
                 .icon(MapUtils.bitmapDescriptorFromVector(getContext(), PlaceConstants.CATEGORY_MARKERS_ACTIVE.get(place.getCategory())));
 
         if(map!=null) {
             Marker marker = map.addMarker(markerOptions);
 
-            RelativeLayout placeDetail = getView().findViewById(R.id.placeLayout);
+            final RelativeLayout placeDetail = getView().findViewById(R.id.placeLayout);
             TextView tvName = placeDetail.findViewById(R.id.placeName);
             TextView tvCategory = placeDetail.findViewById(R.id.placeCategory);
             TextView tvDescription = placeDetail.findViewById(R.id.placeDescription);
@@ -583,7 +622,36 @@ public class FragmentMap
             tvCategory.setTextColor(color);
             detailButton.getBackground().setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
 
+            final LatLng position = place.getPosition();
             placeDetail.setVisibility(View.VISIBLE);
+            placeDetail.getViewTreeObserver().addOnGlobalLayoutListener(
+                    new ViewTreeObserver.OnGlobalLayoutListener(){
+
+                        @Override
+                        public void onGlobalLayout() {
+                            // gets called after layout has been done but before display
+                            // so we can get the height then hide the view
+
+                            int height = placeDetail.getHeight();
+                            int viewHeight = getView().getHeight();
+
+                            int newCenter = (viewHeight + height) / 2;
+                            int offsetY = newCenter - (viewHeight/2);
+
+                            placeDetail.getViewTreeObserver().removeOnGlobalLayoutListener( this );
+                            if (map!=null) {
+                                float zoom = map.getCameraPosition().zoom;
+                                if (zoom < 16) {
+                                    zoom = 16;
+                                }
+                                animateLatLngZoom(position, (int)zoom, 0, offsetY);
+                                //animateLatLngZoom(position, 16, 0, 0);
+                                //map.animateCamera(CameraUpdateFactory.newLatLngZoom(position, 16));
+                            }
+                        }
+
+                    });
+
 
             Log.i(TAG, "showing marker: " + marker.getId());
         }
@@ -929,5 +997,17 @@ public class FragmentMap
                 fragment.selectPlace(place);
             }
         }
+    }
+
+    //returns true if back was handled
+    public boolean backPressed(){
+
+        //todo: if there is circuit displayed, show dialog to make sure they want to close it
+        if (currentState != STATE_PLACES) {
+            hideCurrentState();
+            activateStatePlaces();
+            return true;
+        }
+        return false;
     }
 }

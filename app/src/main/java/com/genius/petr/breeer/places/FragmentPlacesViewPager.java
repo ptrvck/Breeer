@@ -36,10 +36,14 @@ public class FragmentPlacesViewPager extends Fragment{
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_places_viewpager, container, false);
 
-        Log.i(TAG, "onCreateCalled");
+        Log.i(TAG, "onCreateCalled, position: " + position);
 
         Bundle args = getArguments();
-        if(position == -1 && args != null) {
+
+        if (savedInstanceState != null && savedInstanceState.containsKey(ARGUMENT_CATEGORY)) {
+            Log.i(TAG, "state restored");
+            position = savedInstanceState.getInt(ARGUMENT_CATEGORY);
+        } else if(position == -1 && args != null) {
             Log.i(TAG, "args not empty");
             position = args.getInt(ARGUMENT_CATEGORY);
             Log.i(TAG, "arg: " + args.getInt(ARGUMENT_CATEGORY));
@@ -62,6 +66,7 @@ public class FragmentPlacesViewPager extends Fragment{
 
                 MainActivity activity = (MainActivity)FragmentPlacesViewPager.this.getActivity();
                 activity.showPlaceDetail(place.getId());
+
             }
         };
 
@@ -104,6 +109,7 @@ public class FragmentPlacesViewPager extends Fragment{
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 viewPager.setCurrentItem(tab.getPosition());
+                position = tab.getPosition();
             }
 
             @Override
@@ -121,9 +127,16 @@ public class FragmentPlacesViewPager extends Fragment{
     }
 
     @Override
+    public void onPause(){
+        super.onPause();
+        Log.i(TAG, "onPauseCalled");
+    }
+
+    @Override
     public void onSaveInstanceState (Bundle outState) {
-        Log.i(TAG, "onSaveCalled");
         super.onSaveInstanceState(outState);
+        Log.i(TAG, "onSaveCalled");
+        outState.putInt(ARGUMENT_CATEGORY, position);
     }
 
     private static class ShowPlacesAsyncTask extends AsyncTask<Void, Void, PlacesListViewModel> {
