@@ -2,9 +2,11 @@ package com.genius.petr.breeer.places;
 
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
+import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.AppCompatImageButton;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -28,11 +30,14 @@ public class FragmentPlaceDetail extends Fragment {
 
     private PlaceDetailViewModel viewModel;
 
+    public static final String ARGUMENT_SHOW_MAP_BUTTON = "showMapButton";
+
     private TextView tvPlaceName;
     private TextView tvPlaceType;
     private TextView tvDescription;
     private TextView tvPhone;
     private TextView tvWeb;
+    private Button mapButton;
 
     private long id;
 
@@ -51,6 +56,7 @@ public class FragmentPlaceDetail extends Fragment {
         this.tvDescription = view.findViewById(R.id.tv_description);
         this.tvPhone = view.findViewById(R.id.tv_phone);
         this.tvWeb = view.findViewById(R.id.tv_web);
+        this.mapButton = view.findViewById(R.id.button_showOnMap);
 
         viewModel= ViewModelProviders.of(this,
                 new PlaceDetailViewModelFactory(this.getActivity().getApplication(), id))
@@ -59,13 +65,27 @@ public class FragmentPlaceDetail extends Fragment {
         viewModel.getPlace().observe(this, new Observer<Place>() {
             @Override
             public void onChanged(@Nullable Place place) {
+                if (place == null) {
+                    return;
+                }
                 tvPlaceName.setText(place.getName());
                 tvPlaceType.setText(PlaceConstants.CATEGORY_NAMES.get(place.getCategory()));
                 tvDescription.setText(place.getDescription());
                 tvPhone.setText(place.getPhone());
                 tvWeb.setText(place.getWeb());
+
+                int color = ContextCompat.getColor(getContext(), PlaceConstants.CATEGORY_COLORS.get(place.getCategory()));
+                mapButton.getBackground().setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+                tvDescription.setLinkTextColor(color);
+                tvPlaceType.setTextColor(color);
+                tvPhone.setTextColor(color);
+                tvPhone.setLinkTextColor(color);
+                tvWeb.setTextColor(color);
+                tvWeb.setLinkTextColor(color);
             }
         });
+
+
 
         AppCompatImageButton upButton = view.findViewById(R.id.upButton);
         upButton.setOnClickListener(new View.OnClickListener() {
@@ -76,7 +96,7 @@ public class FragmentPlaceDetail extends Fragment {
             }
         });
 
-        Button mapButton = view.findViewById(R.id.button_showOnMap);
+
         mapButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -85,6 +105,14 @@ public class FragmentPlaceDetail extends Fragment {
                 activity.showPlaceOnMap(place);
             }
         });
+
+        Bundle args = getArguments();
+        if (args.containsKey(ARGUMENT_SHOW_MAP_BUTTON)) {
+            boolean showMapButton = args.getBoolean(ARGUMENT_SHOW_MAP_BUTTON);
+            if (!showMapButton) {
+                mapButton.setVisibility(View.GONE);
+            }
+        }
 
         return view;
     }

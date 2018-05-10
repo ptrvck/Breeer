@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/colorMiscAccent">
+
+    <TextView
+        android:id="@+id/circuitName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Small Circuit"
+        android:textAppearance="@style/PlaceListPlaceTitle"
+        android:layout_marginLeft="15dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="11dp"/>
+    <Button
+        android:id="@+id/button_closeCircuit"
+        android:text="close"
+        android:layout_marginTop="6dp"
+        android:layout_marginRight="12dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:background="@drawable/rounded_button_white"
+        style="@style/buttonWhiteSmallStyle"/>
+
+    <android.support.v4.view.ViewPager
+        android:background="@color/colorWhite"
+        android:layout_below="@id/circuitName"
+        android:id="@+id/viewpager_circuitStops"
+        android:layout_height="180dp"
+        android:layout_width="match_parent" />
+
+</RelativeLayout>

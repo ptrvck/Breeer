@@ -3,17 +3,17 @@
 
     <item
         android:id="@+id/navigation_map"
-        android:icon="@drawable/ic_home_black_24dp"
+        android:icon="@drawable/navigation_map"
         android:title="@string/title_map" />
 
     <item
         android:id="@+id/navigation_circuits"
-        android:icon="@drawable/ic_dashboard_black_24dp"
+        android:icon="@drawable/navigation_circuit"
         android:title="@string/title_circuits" />
 
     <item
         android:id="@+id/navigation_places"
-        android:icon="@drawable/ic_notifications_black_24dp"
+        android:icon="@drawable/navigation_places"
         android:title="@string/title_places" />
 
     <item

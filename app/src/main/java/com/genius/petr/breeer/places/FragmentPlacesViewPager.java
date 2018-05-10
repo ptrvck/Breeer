@@ -2,6 +2,7 @@ package com.genius.petr.breeer.places;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
@@ -51,11 +52,15 @@ public class FragmentPlacesViewPager extends Fragment{
 
         viewPager = view.findViewById(R.id.viewpager_places);
 
+        return view;
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
         AppDatabase db = AppDatabase.getDatabase(getActivity().getApplication());
         ShowPlacesAsyncTask task = new ShowPlacesAsyncTask(this, db);
         task.execute();
-
-        return view;
     }
 
     private View.OnClickListener getPlaceClickListener() {

@@ -2,10 +2,39 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/colorBackgroundLight">
+    android:background="@color/colorBackgroundLight"
+    android:orientation="vertical"
+    android:paddingLeft="15dp"
+    android:paddingRight="15dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="20dp">
 
     <TextView
         android:id="@+id/tv_name"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/CircuitStopHeadline"
+        android:text="Měnínská brána"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:layout_marginBottom="10dp"/>
+
+    <TextView
+        android:id="@+id/tv_description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="2"
+        style="@style/BaseTextDescription"
+        android:text="@string/dummyLong"
+        android:layout_marginBottom="20dp"/>
+
+    <Button
+        android:id="@+id/button_detail"
+        android:text="detail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/rounded_button"
+        style="@style/buttonStyle"/>
+
 </LinearLayout>

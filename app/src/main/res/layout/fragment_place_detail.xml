@@ -20,7 +20,6 @@
         android:id="@+id/tv_placeName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Name"
         style="@style/MainTitle"
         android:layout_below="@id/upButton"/>
 
@@ -29,7 +28,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         style="@style/CategoryTitle"
-        android:text="Type"
         android:layout_below="@id/tv_placeName" />
 
     <ScrollView
@@ -41,23 +39,26 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="vertical">
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/tv_description"
-                android:text="Desc"/>
+                android:id="@+id/tv_description"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/tv_phone"
+                android:textSize="16sp"
+                android:layout_marginTop="15dp"
                 android:autoLink="phone"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/tv_web"
+                android:textSize="16sp"
+                android:layout_marginTop="15dp"
                 android:autoLink="web"/>
         </LinearLayout>
     </ScrollView>

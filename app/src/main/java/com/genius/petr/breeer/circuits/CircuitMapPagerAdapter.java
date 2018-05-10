@@ -1,14 +1,20 @@
 package com.genius.petr.breeer.circuits;
 
 import android.content.Context;
+import android.graphics.PorterDuff;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.PagerAdapter;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.genius.petr.breeer.R;
+import com.genius.petr.breeer.database.Circuit;
 import com.genius.petr.breeer.database.Place;
+import com.genius.petr.breeer.database.PlaceConstants;
 
 import org.w3c.dom.Text;
 
@@ -34,9 +40,30 @@ public class CircuitMapPagerAdapter extends PagerAdapter {
         ViewGroup layout = (ViewGroup) inflater.inflate(R.layout.view_circuit_stop_on_map, collection, false);
         TextView tvName = layout.findViewById(R.id.tv_name);
         tvName.setText(place.getName());
+        TextView tvDescription = layout.findViewById(R.id.tv_description);
+        tvDescription.setText(place.getDescription());
+
+        int color = ContextCompat.getColor(context, PlaceConstants.CATEGORY_COLORS.get(viewModel.getType()));
+        Button buttonDetail = layout.findViewById(R.id.button_detail);
+        buttonDetail.getBackground().setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+
+        final long id = place.getId();
+        buttonDetail.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                callback(id);
+            }
+        });
+
         collection.addView(layout);
         return layout;
     }
+
+
+    public void callback(long placeId){
+        Log.i("callbackTest", "from adapter");
+    }
+
 
     @Override
     public void destroyItem(ViewGroup collection, int position, Object view) {

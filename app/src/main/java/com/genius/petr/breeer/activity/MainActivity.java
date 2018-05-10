@@ -25,6 +25,7 @@ import com.genius.petr.breeer.map.FragmentMap;
 import com.genius.petr.breeer.places.FragmentPlaceCategories;
 import com.genius.petr.breeer.places.FragmentPlaceDetail;
 import com.genius.petr.breeer.R;
+import com.genius.petr.breeer.places.FragmentPlacesViewPager;
 
 import java.lang.reflect.Field;
 import java.util.Locale;
@@ -66,9 +67,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void showPlaceDetail(long id) {
+        showPlaceDetail(id, true);
+    }
+
+    public void showPlaceDetail(long id, boolean showMapButton) {
+        FragmentPlaceDetail fragment = FragmentPlaceDetail.newInstance(id);
+
+        if (!showMapButton) {
+            Bundle args = fragment.getArguments();
+            args.putBoolean(FragmentPlaceDetail.ARGUMENT_SHOW_MAP_BUTTON, showMapButton);
+            fragment.setArguments(args);
+        }
+
         FragmentManager manager = getSupportFragmentManager();
-        manager.beginTransaction().replace(R.id.fragmentLayout, FragmentPlaceDetail.newInstance(id)).addToBackStack(null).commit();
-        //viewPager.setVisibility(View.GONE);
+        manager.beginTransaction().replace(R.id.fragmentLayout, fragment).addToBackStack(null).commit();
     }
 
     @Override

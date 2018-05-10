@@ -228,6 +228,7 @@ public class FragmentMap
             View child = filtersGrid.getChildAt(i);
             if (child instanceof CheckBox) {
                 final CheckBox filter = (CheckBox) child;
+
                 filter.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                     @Override
                     public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
@@ -525,7 +526,16 @@ public class FragmentMap
         }
 
         if (currentState == STATE_CIRCUIT) {
-            //TODO
+            RelativeLayout circuitLayout = getView().findViewById(R.id.circuitLayout);
+            ViewPager viewPager = circuitLayout.findViewById(R.id.viewpager_circuitStops);
+            int position = 0;
+            for (Marker m : circuitMarkers) {
+                if (m.equals(marker)) {
+                    viewPager.setCurrentItem(position);
+                    break;
+                }
+                position++;
+            }
             return true;
         }
 
@@ -827,20 +837,14 @@ public class FragmentMap
     private void showCircuit(CircuitMapViewModel viewModel) {
 
         circuitMarkers = new ArrayList<>();
-        int color = getResources().getColor(PlaceConstants.CATEGORY_COLORS.get(viewModel.getType()));
+        final int color = getResources().getColor(PlaceConstants.CATEGORY_COLORS.get(viewModel.getType()));
         BitmapDescriptor markerIcon = MapUtils.bitmapDescriptorFromVector(FragmentMap.this.getContext(), R.drawable.marker_circuit, color);
-
-
-
 
         for (Place place : viewModel.getStops()) {
             MarkerOptions markerOptions = new MarkerOptions().position(place.getPosition()).title(Long.toString(place.getId())).icon(markerIcon).anchor(0.5f, 0.5f);
             Marker marker = map.addMarker(markerOptions);
             circuitMarkers.add(marker);
         }
-
-
-
 
         List<LatLng> path = viewModel.getPath();
 
@@ -849,7 +853,7 @@ public class FragmentMap
         }
 
         LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
-        PolylineOptions polylineOptions = new PolylineOptions();
+        final PolylineOptions polylineOptions = new PolylineOptions();
 
         for (LatLng node : path) {
             polylineOptions.add(node);
@@ -864,6 +868,7 @@ public class FragmentMap
 
 
         RelativeLayout circuitLayout = getView().findViewById(R.id.circuitLayout);
+        circuitLayout.setBackgroundColor(color);
         circuitLayout.setVisibility(View.VISIBLE);
 
 
@@ -871,6 +876,7 @@ public class FragmentMap
         tvCircuitName.setText(viewModel.getName());
 
         Button button_close = getView().findViewById(R.id.button_closeCircuit);
+        button_close.setTextColor(color);
         button_close.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -879,9 +885,51 @@ public class FragmentMap
         });
 
         ViewPager viewPager = getView().findViewById(R.id.viewpager_circuitStops);
-        CircuitMapPagerAdapter adapter = new CircuitMapPagerAdapter(getContext(), viewModel);
+        CircuitMapPagerAdapter adapter = new CircuitMapPagerAdapter(getContext(), viewModel) {
+            @Override
+            public  void callback(long placeId){
+                Log.i("callbackTest", "from fragment");
+                Log.i("callbackTest", "id: " +placeId);
+            MainActivity activity = (MainActivity)getActivity();
+            activity.showPlaceDetail(placeId, false);
+            }
+        };
+
         viewPager.setAdapter(adapter);
         viewPager.setVisibility(View.VISIBLE);
+
+        //todo: remove this and rework panel so that viewpager is hidden until user selects a node
+        int selectedPosition = viewPager.getCurrentItem();
+        circuitMarkers.get(selectedPosition).setIcon(MapUtils.bitmapDescriptorFromVector(FragmentMap.this.getContext(), R.drawable.marker_circuit));
+
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                LatLng location = circuitMarkers.get(position).getPosition();
+                map.animateCamera(CameraUpdateFactory.newLatLng(location));
+                int p = 0;
+                BitmapDescriptor markerIcon = MapUtils.bitmapDescriptorFromVector(FragmentMap.this.getContext(), R.drawable.marker_circuit, color);
+                for (Marker marker : circuitMarkers) {
+                    if (p == position) {
+                        marker.setIcon(MapUtils.bitmapDescriptorFromVector(FragmentMap.this.getContext(), R.drawable.marker_circuit));
+                    } else {
+                        //inefficient, but there will always be only like ~10 markers
+                        marker.setIcon(markerIcon);
+                    }
+                    p++;
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
 
         map.addPolyline(polylineOptions);
 

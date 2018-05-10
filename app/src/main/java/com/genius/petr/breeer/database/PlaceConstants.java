@@ -65,15 +65,15 @@ public class PlaceConstants {
         CATEGORY_ICONS = Collections.unmodifiableMap(iconIds);
 
         Map<Integer, Integer> blackIconIds = new HashMap<>();
-        blackIconIds.put(0, R.drawable.cat_area_d);
-        blackIconIds.put(1, R.drawable.cat_misc_d);
-        blackIconIds.put(2, R.drawable.cat_food_d);
-        blackIconIds.put(3, R.drawable.cat_nature_d);
-        blackIconIds.put(4, R.drawable.cat_coffee_d);
-        blackIconIds.put(5, R.drawable.cat_beer_d);
-        blackIconIds.put(6, R.drawable.cat_bar_d);
-        blackIconIds.put(7, R.drawable.cat_music_d);
-        blackIconIds.put(8, R.drawable.cat_art_d);
+        blackIconIds.put(0, R.drawable.cat_area_b);
+        blackIconIds.put(1, R.drawable.cat_misc_b);
+        blackIconIds.put(2, R.drawable.cat_food_b);
+        blackIconIds.put(3, R.drawable.cat_nature_b);
+        blackIconIds.put(4, R.drawable.cat_coffee_b);
+        blackIconIds.put(5, R.drawable.cat_beer_b);
+        blackIconIds.put(6, R.drawable.cat_bar_b);
+        blackIconIds.put(7, R.drawable.cat_music_b);
+        blackIconIds.put(8, R.drawable.cat_art_b);
         CATEGORY_ICONS_BLACK = Collections.unmodifiableMap(blackIconIds);
 
         Map<Integer, Integer> markersIds = new HashMap<>();
