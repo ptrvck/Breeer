@@ -12,7 +12,8 @@
         android:layout_height="wrap_content"
         app:tabMode="scrollable"
         app:tabIndicatorColor="@color/colorBlack"
-        android:background="@color/colorTransparent"
+        app:tabIndicatorHeight="2dp"
+        android:background="@color/colorSuperLightGray"
         android:layout_marginBottom="15dp"/>
 
     <android.support.v4.view.ViewPager

@@ -4,6 +4,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -13,6 +14,7 @@ import com.genius.petr.breeer.R;
 import com.genius.petr.breeer.activity.MainActivity;
 import com.genius.petr.breeer.database.AppDatabase;
 import com.genius.petr.breeer.database.Circuit;
+import com.genius.petr.breeer.database.PlaceConstants;
 import com.genius.petr.breeer.places.PlacesListPagerAdapter;
 import com.genius.petr.breeer.places.PlacesListPagerTransformer;
 import com.genius.petr.breeer.places.PlacesListViewModel;
@@ -28,6 +30,7 @@ public class FragmentCircuits extends Fragment {
 
     private ViewPager viewPager;
     private TabLayout tabLayout;
+    private CircuitListViewModel viewModel;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -42,7 +45,8 @@ public class FragmentCircuits extends Fragment {
         return view;
     }
 
-    private void showViewPager(CircuitListViewModel viewModel) {
+    private void showViewPager(final CircuitListViewModel viewModel) {
+        this.viewModel = viewModel;
         CircuitListPagerAdapter adapter = new CircuitListPagerAdapter(getContext(), viewModel){
             @Override public void callback(Circuit circuit){
                 MainActivity activity = (MainActivity)getActivity();
@@ -55,6 +59,33 @@ public class FragmentCircuits extends Fragment {
 
         tabLayout = getView().findViewById(R.id.sliding_tabs);
         tabLayout.setupWithViewPager(viewPager, false);
+
+        int pos = viewPager.getCurrentItem();
+        Circuit circuit = viewModel.getCircuits().get(pos);
+        int color = ContextCompat.getColor(getContext(), PlaceConstants.CATEGORY_COLORS.get(circuit.getType()));
+        tabLayout.setSelectedTabIndicatorColor(color);
+
+
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                if (viewModel != null) {
+                    Circuit circuit = viewModel.getCircuits().get(tab.getPosition());
+                    int color = ContextCompat.getColor(FragmentCircuits.this.getContext(), PlaceConstants.CATEGORY_COLORS.get(circuit.getType()));
+                    tabLayout.setSelectedTabIndicatorColor(color);
+                }
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+
+            }
+        });
     }
 
 

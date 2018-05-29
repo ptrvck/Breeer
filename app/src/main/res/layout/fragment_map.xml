@@ -13,10 +13,9 @@
 
     <include layout="@layout/layout_circuit_on_map"
         android:id="@+id/circuitLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
         android:visibility="gone"/>
+
+
 
     <include layout="@layout/view_place_map_detail"
         android:id="@+id/placeLayout"

@@ -31,7 +31,7 @@ public class DatabaseRoomManager {
         database = AppDatabase.getDatabase(context);
     }
 
-    public void updateDatabase(final Context context) {
+    public void updateDatabase(final Context context, final DatabaseUpdateListener listener) {
         // Instantiate the RequestQueue.
         RequestQueue queue = Volley.newRequestQueue(context);
         String url = context.getString(R.string.server_url) + context.getString(R.string.script_url);
@@ -44,7 +44,7 @@ public class DatabaseRoomManager {
                         //this is called on UI thread
                         Log.i(TAG,"Response is: "+ response.toString().substring(0, 500));
                         //updateSQLite(response, context);
-                        UpdateDbAsync task = new UpdateDbAsync(database, response);
+                        UpdateDbAsync task = new UpdateDbAsync(database, response, listener);
                         task.execute();
                                             }
                 }, new Response.ErrorListener() {
@@ -176,11 +176,11 @@ public class DatabaseRoomManager {
         }
     }
 
-    private static void updateDb(AppDatabase db, JSONObject response) {
+    private static boolean updateDb(AppDatabase db, JSONObject response) {
         try {
             int success = response.getInt(JsonConstants.SUCCESS);
             if (success != 1) {
-                return;
+                return false;
             }
 
             if (response.has(JsonConstants.PLACES)) {
@@ -201,7 +201,7 @@ public class DatabaseRoomManager {
             }
 
         } catch (JSONException e) {
-
+            return false;
         }
 
         List<Place> places = db.place().selectAllSynchronous();
@@ -218,22 +218,33 @@ public class DatabaseRoomManager {
                 Log.d(TAG, "---id: " + i);
             }
         }
+
+        return true;
     }
 
-    private static class UpdateDbAsync extends AsyncTask<Void, Void, Void> {
+    private static class UpdateDbAsync extends AsyncTask<Void, Void, Boolean> {
 
+        //todo: can this be final?
         private final AppDatabase mDb;
         private final JSONObject mResponse;
+        private final DatabaseUpdateListener mListener;
 
-        UpdateDbAsync(AppDatabase db, JSONObject response) {
+        UpdateDbAsync(AppDatabase db, JSONObject response, DatabaseUpdateListener listener) {
             mDb = db;
             mResponse = response;
+            mListener = listener;
         }
 
         @Override
-        protected Void doInBackground(final Void... params) {
-            updateDb(mDb, mResponse);
-            return null;
+        protected Boolean doInBackground(final Void... params) {
+            return updateDb(mDb, mResponse);
+        }
+
+        @Override
+        protected void onPostExecute(Boolean success) {
+            if (mListener!=null) {
+                mListener.onDatabaseUpdateFinished(success);
+            }
         }
 
     }

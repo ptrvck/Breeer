@@ -47,7 +47,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/circuitHeadline"
-        android:layout_above="@id/button_startCircuit"
+        android:layout_above="@id/button_layout"
         android:paddingLeft="25dp"
         android:paddingRight="25dp">
         <TextView
@@ -58,14 +58,21 @@
             android:text="@string/dummySuperLong"/>
     </ScrollView>
 
-    <Button
-        android:id="@+id/button_startCircuit"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:text="Start circuit"
-        android:background="@drawable/rounded_button"
-        style="@style/buttonStyle"
-        android:layout_margin="20dp"/>
+        android:id="@+id/button_layout"
+        android:gravity="center"
+        android:background="@color/colorSuperLightGray">
+        <Button
+            android:id="@+id/button_startCircuit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Start circuit"
+            android:background="@drawable/rounded_button"
+            style="@style/buttonStyle"
+            android:layout_margin="20dp"/>
+    </LinearLayout>
+
 </RelativeLayout>

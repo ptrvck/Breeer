@@ -14,6 +14,17 @@ import java.util.List;
 public class PlacesListViewModel {
     SparseArray<List<Place>> categories = new SparseArray<>();
 
+    public int getActivePostion() {
+        return activePostion;
+    }
+
+    public void setActivePostion(int activePostion) {
+        this.activePostion = activePostion;
+    }
+
+    int activePostion = 0;
+
+
     public PlacesListViewModel(AppDatabase appDatabase) {
 
         for (int category : PlaceConstants.CATEGORIES) {

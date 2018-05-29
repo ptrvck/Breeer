@@ -32,7 +32,7 @@ public class FragmentDb extends Fragment {
         startButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 DatabaseRoomManager db = new DatabaseRoomManager(getContext());
-                db.updateDatabase(getContext());
+                db.updateDatabase(getContext(), null);
             }
         });
 

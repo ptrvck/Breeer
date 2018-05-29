@@ -16,6 +16,7 @@ import com.genius.petr.breeer.activity.MainActivity;
 import com.genius.petr.breeer.database.AppDatabase;
 import com.genius.petr.breeer.database.Circuit;
 import com.genius.petr.breeer.database.Place;
+import com.google.android.gms.maps.GoogleMap;
 
 import java.lang.ref.WeakReference;
 
@@ -78,10 +79,38 @@ public class FragmentPlacesViewPager extends Fragment{
         return listener;
     }
 
-    private void showViewPager(PlacesListViewModel viewModel) {
-        PlacesListPagerAdapter adapter = new PlacesListPagerAdapter(getContext(), viewModel, getPlaceClickListener());
+
+    private void showViewPager(final PlacesListViewModel viewModel) {
+        PlacesListPagerAdapter adapter = new PlacesListPagerAdapter(getContext(), viewModel, getPlaceClickListener()){
+            @Override
+            public void onMapClick(int category) {
+                MainActivity activity = (MainActivity)FragmentPlacesViewPager.this.getActivity();
+                activity.showCatogeryOnMap(category);
+                Log.i(TAG, "showcing cat: " + category);
+            }
+        };
         viewPager.setAdapter(adapter);
         viewPager.setPageTransformer(true, new PlacesListPagerTransformer());
+
+
+        //todo: this is probably as unclean as it gets
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+
+                viewModel.setActivePostion(position);
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
 
         //todo: place position in view model?
 

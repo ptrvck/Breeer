@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 
 import com.genius.petr.breeer.R;
@@ -29,6 +30,8 @@ public class PlacesListPagerAdapter extends PagerAdapter {
     private PlacesListViewModel viewModel;
     private View.OnClickListener placeClickListener;
 
+    private static final String TAG = "placesListAdapterLog";
+
 
     public PlacesListPagerAdapter(Context context, PlacesListViewModel viewModel, View.OnClickListener placeClickListener) {
         this.context = context;
@@ -38,6 +41,8 @@ public class PlacesListPagerAdapter extends PagerAdapter {
 
     @Override
     public Object instantiateItem(ViewGroup collection, int position) {
+
+        Log.i(TAG, "position: " + position);
 
         final List<Place> places = viewModel.getPlacesOfCategory(position);
         LayoutInflater inflater = LayoutInflater.from(context);
@@ -54,8 +59,21 @@ public class PlacesListPagerAdapter extends PagerAdapter {
         recyclerView.setLayoutManager(new LinearLayoutManager(context));
         recyclerView.setAdapter(placeAdapter);
 
+        Button mapButton = layout.findViewById(R.id.button_map);
+        mapButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                onMapClick(viewModel.getActivePostion());
+                Log.i(TAG, "showcing cat: " + viewModel.getActivePostion());
+            }
+        });
+
         collection.addView(layout);
         return layout;
+    }
+
+    public void onMapClick(int position) {
+
     }
 
     @Override

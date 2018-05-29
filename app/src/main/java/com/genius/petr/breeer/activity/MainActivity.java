@@ -53,9 +53,10 @@ public class MainActivity extends AppCompatActivity {
                 case R.id.navigation_places:
                     viewPager.setCurrentItem(2);
                     return true;
+                    /*
                 case R.id.navigation_settings:
                     viewPager.setCurrentItem(3);
-                return true;
+                return true;*/
             }
             return false;
         }
@@ -81,6 +82,15 @@ public class MainActivity extends AppCompatActivity {
 
         FragmentManager manager = getSupportFragmentManager();
         manager.beginTransaction().replace(R.id.fragmentLayout, fragment).addToBackStack(null).commit();
+    }
+
+    public void showCatogeryOnMap(int category) {
+        BottomNavigationView navigation = findViewById(R.id.navigation);
+        navigation.setSelectedItemId(R.id.navigation_map);
+
+        BreeerViewPagerAdapter adapter = (BreeerViewPagerAdapter)viewPager.getAdapter();
+        FragmentMap mapFragment = (FragmentMap)adapter.getFragment(0);
+        mapFragment.showCategory(category);
     }
 
     @Override
@@ -142,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
         viewPager = findViewById(R.id.viewpager);
-        viewPager.setOffscreenPageLimit(1);
+        viewPager.setOffscreenPageLimit(3);
         viewPager.setPagingEnabled(false);
         BreeerViewPagerAdapter adapter = new BreeerViewPagerAdapter (MainActivity.this.getSupportFragmentManager());
         adapter.addFragment(new FragmentMap(), "Map");

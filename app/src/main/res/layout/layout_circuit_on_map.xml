@@ -2,9 +2,13 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="@color/colorMiscAccent">
+    android:layout_height="match_parent">
 
+    <RelativeLayout
+        android:id="@+id/circuitLabelLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorMiscAccent">
     <TextView
         android:id="@+id/circuitName"
         android:layout_width="wrap_content"
@@ -16,7 +20,7 @@
         android:layout_marginBottom="11dp"/>
     <Button
         android:id="@+id/button_closeCircuit"
-        android:text="close"
+        android:text="exit circuit"
         android:layout_marginTop="6dp"
         android:layout_marginRight="12dp"
         android:layout_width="wrap_content"
@@ -24,10 +28,11 @@
         android:layout_alignParentRight="true"
         android:background="@drawable/rounded_button_white"
         style="@style/buttonWhiteSmallStyle"/>
+    </RelativeLayout>
 
     <android.support.v4.view.ViewPager
         android:background="@color/colorWhite"
-        android:layout_below="@id/circuitName"
+        android:layout_alignParentBottom="true"
         android:id="@+id/viewpager_circuitStops"
         android:layout_height="180dp"
         android:layout_width="match_parent" />

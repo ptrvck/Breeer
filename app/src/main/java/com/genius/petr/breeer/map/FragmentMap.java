@@ -301,7 +301,10 @@ public class FragmentMap
             googleMap.setMyLocationEnabled(true);
         }
 
-
+        if (currentState == STATE_SINGLE) {
+            final RelativeLayout placeDetail = getView().findViewById(R.id.placeLayout);
+            placeDetail.setVisibility(View.GONE);
+        }
         // For showing a move to my location button1
         //googleMap.setMyLocationEnabled(true);
 
@@ -313,6 +316,14 @@ public class FragmentMap
         //CameraPosition cameraPosition = new CameraPosition.Builder().target(sydney).zoom(12).build();
         //googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
+
+
+    }
+
+    @Override
+    public void onMapLoaded() {
+        View overlay = getView().findViewById(R.id.loadingOverlay);
+        overlay.setVisibility(View.GONE);
         if (currentState == STATE_PLACES) {
             refreshMarkers();
         }
@@ -325,14 +336,6 @@ public class FragmentMap
         if (currentState == STATE_SINGLE) {
             selectPlace(activePlaceId);
         }
-
-
-    }
-
-    @Override
-    public void onMapLoaded() {
-        View overlay = getView().findViewById(R.id.loadingOverlay);
-        overlay.setVisibility(View.GONE);
     }
 
 
@@ -413,7 +416,7 @@ public class FragmentMap
         @Override
         public void onLocationResult(LocationResult locationResult) {
             for (Location location : locationResult.getLocations()) {
-                Log.i(TAG, "Location: " + location.getLatitude() + " " + location.getLongitude());
+               // Log.i(TAG, "Location: " + location.getLatitude() + " " + location.getLongitude());
             }
         };
 
@@ -430,7 +433,6 @@ public class FragmentMap
             Log.i(TAG, "onMarkerClick");
             //cluster
             if (marker.getTitle() == null) {
-                hidePlaceDetail();
                 map.animateCamera(CameraUpdateFactory.newLatLngZoom(
                         marker.getPosition(), (float) Math.floor(map
                                 .getCameraPosition().zoom + 1)), 300,
@@ -444,6 +446,7 @@ public class FragmentMap
         }
 
         if (currentState == STATE_CIRCUIT) {
+            updateCircuitActiveMarker(marker);
             selectCircuitNode(marker);
             return true;
         }
@@ -451,10 +454,24 @@ public class FragmentMap
         return true;
     }
 
+    private void updateCircuitActiveMarker(Marker active){
+        int color = getResources().getColor(PlaceConstants.CATEGORY_COLORS.get(activeCircuit.getType()));
+        BitmapDescriptor markerIcon = MapUtils.bitmapDescriptorFromVector(FragmentMap.this.getContext(), R.drawable.marker_circuit, color);
+
+        //old active
+        if (activeMarker != null) {
+            activeMarker.setIcon(markerIcon);
+        }
+
+        activeMarker = active;
+        activeMarker.setIcon(MapUtils.bitmapDescriptorFromVector(FragmentMap.this.getContext(), R.drawable.marker_circuit));
+    }
+
     private void selectCircuitNode(Marker marker){
 
         RelativeLayout circuitLayout = getView().findViewById(R.id.circuitLayout);
         ViewPager viewPager = circuitLayout.findViewById(R.id.viewpager_circuitStops);
+        viewPager.setVisibility(View.VISIBLE);
         int position = 0;
         for (Marker m : circuitMarkers) {
             if (m.equals(marker)) {
@@ -499,7 +516,27 @@ public class FragmentMap
         if (currentState == STATE_SINGLE) {
             hideCurrentState();
             activateStatePlaces();
+            return;
         }
+
+        if (currentState == STATE_CIRCUIT) {
+            deactivateCircuitNode();
+            return;
+        }
+    }
+
+    private void deactivateCircuitNode(){
+        int color = getResources().getColor(PlaceConstants.CATEGORY_COLORS.get(activeCircuit.getType()));
+        BitmapDescriptor markerIcon = MapUtils.bitmapDescriptorFromVector(FragmentMap.this.getContext(), R.drawable.marker_circuit, color);
+
+        //old active
+        if (activeMarker != null) {
+            activeMarker.setIcon(markerIcon);
+            activeMarker = null;
+        }
+
+        ViewPager viewPager = getView().findViewById(R.id.viewpager_circuitStops);
+        viewPager.setVisibility(View.GONE);
     }
 
     public void selectPlace(final Place place) {
@@ -515,6 +552,7 @@ public class FragmentMap
                 .icon(MapUtils.bitmapDescriptorFromVector(getContext(), PlaceConstants.CATEGORY_MARKERS_ACTIVE.get(place.getCategory())));
 
         if(map!=null) {
+            Log.i(TAG, "map ok");
             Marker marker = map.addMarker(markerOptions);
 
             final RelativeLayout placeDetail = getView().findViewById(R.id.placeLayout);
@@ -555,6 +593,7 @@ public class FragmentMap
 
                         @Override
                         public void onGlobalLayout() {
+                            Log.i(TAG, "on global layout");
                             // gets called after layout has been done but before display
                             placeDetail.getViewTreeObserver().removeOnGlobalLayoutListener( this );
 
@@ -574,10 +613,39 @@ public class FragmentMap
                             }
 
                             placeDetail.setTranslationY(height);
-                            placeDetail.animate().translationY(0).setDuration(1000);
-                            View content = placeDetail.findViewById(R.id.content);
+                            placeDetail.animate().translationY(0).setDuration(1000).setListener(new AnimatorListenerAdapter() {
+                                @Override
+                                public void onAnimationEnd(Animator animation) {
+                                    super.onAnimationEnd(animation);
+                                    Log.i(TAG, "on show anim end");
+                                    Log.i(TAG, "visibility: " + placeDetail.getVisibility());
+                                    placeDetail.clearAnimation();
+                                    placeDetail.animate().setListener(null);
+                                }
+
+                                @Override
+                                public void onAnimationCancel(Animator animation) {
+                                    animation.removeAllListeners();
+                                }
+                            });
+
+                            final View content = placeDetail.findViewById(R.id.content);
                             content.setAlpha(0f);
-                            content.animate().alpha(1f).setDuration(800).setStartDelay(250);
+                            content.animate().alpha(1f).setDuration(800).setStartDelay(250).setListener(new AnimatorListenerAdapter() {
+                                @Override
+                                public void onAnimationEnd(Animator animation) {
+                                    super.onAnimationEnd(animation);
+                                    content.clearAnimation();
+                                    content.animate().setListener(null);
+                                }
+
+                                @Override
+                                public void onAnimationCancel(Animator animation) {
+                                    animation.removeAllListeners();
+                                }
+                            });
+
+
                             /*
                                     .setListener(new AnimatorListenerAdapter() {
                                         @Override
@@ -597,9 +665,30 @@ public class FragmentMap
     }
 
     public void selectPlace(long placeId) {
-        hideCurrentState();
+        Log.i(TAG, "selectPlace called: " + placeId);
         ShowPlaceAsyncTask task = new ShowPlaceAsyncTask(FragmentMap.this, AppDatabase.getDatabase(getContext().getApplicationContext()), placeId);
         task.execute();
+    }
+
+    public void showCategory(int category) {
+        Log.i(TAG, "showcing cat: " + category);
+
+        hideCurrentState();
+
+        for(int i=0; i < filtersGrid.getChildCount(); i++) {
+            View child = filtersGrid.getChildAt(i);
+            if (child instanceof CheckBox) {
+                final CheckBox filter = (CheckBox) child;
+                if (i==category) {
+                    filter.setChecked(true);
+                } else {
+                    filter.setChecked(false);
+                }
+            }
+        }
+
+        activateStatePlaces();
+
     }
 
     public void closePlace(){
@@ -624,6 +713,11 @@ public class FragmentMap
                 placeDetail.setVisibility(View.GONE);
                 placeDetail.clearAnimation();
                 placeDetail.animate().setListener(null);
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                animation.removeAllListeners();
             }
         });
 
@@ -690,6 +784,10 @@ public class FragmentMap
     }
 
     private void hideCurrentState() {
+        if (map != null) {
+            map.setPadding(0, 0, 0, 0);
+        }
+
         if (currentState == STATE_PLACES) {
             if (clusterManager != null) {
                 clusterManager.clearItems();
@@ -756,8 +854,20 @@ public class FragmentMap
 
 
         RelativeLayout circuitLayout = getView().findViewById(R.id.circuitLayout);
-        circuitLayout.setBackgroundColor(color);
+        RelativeLayout circuitLabelLayout = getView().findViewById(R.id.circuitLabelLayout);
+        circuitLabelLayout.setBackgroundColor(color);
         circuitLayout.setVisibility(View.VISIBLE);
+
+
+        circuitLabelLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                RelativeLayout circuitLabelLayout = getView().findViewById(R.id.circuitLabelLayout);
+                circuitLabelLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                int topPadding = circuitLabelLayout.getHeight();
+                map.setPadding(0, topPadding, 0 , 0);
+            }
+        });
 
 
         TextView tvCircuitName = getView().findViewById(R.id.circuitName);
@@ -800,17 +910,7 @@ public class FragmentMap
             public void onPageSelected(int position) {
                 LatLng location = circuitMarkers.get(position).getPosition();
                 map.animateCamera(CameraUpdateFactory.newLatLng(location));
-
-                int color = getResources().getColor(PlaceConstants.CATEGORY_COLORS.get(activeCircuit.getType()));
-                BitmapDescriptor markerIcon = MapUtils.bitmapDescriptorFromVector(FragmentMap.this.getContext(), R.drawable.marker_circuit, color);
-
-                //old active
-                if (activeMarker != null) {
-                    activeMarker.setIcon(markerIcon);
-                }
-
-                activeMarker = circuitMarkers.get(position);
-                activeMarker.setIcon(MapUtils.bitmapDescriptorFromVector(FragmentMap.this.getContext(), R.drawable.marker_circuit));
+                updateCircuitActiveMarker(circuitMarkers.get(position));
 
             }
 
@@ -937,6 +1037,15 @@ public class FragmentMap
 
     //returns true if back was handled
     public boolean backPressed(){
+
+        if (currentState == STATE_CIRCUIT) {
+            Log.i(TAG, "circuit state");
+            if (activeMarker != null) {
+                Log.i(TAG, "marker !null");
+                deactivateCircuitNode();
+                return true;
+            }
+        }
 
         //todo: if there is circuit displayed, show dialog to make sure they want to close it
         if (currentState != STATE_PLACES) {
