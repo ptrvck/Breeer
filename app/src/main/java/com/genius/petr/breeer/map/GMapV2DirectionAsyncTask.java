@@ -1,35 +1,30 @@
 package com.genius.petr.breeer.map;
 
+import java.io.BufferedReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.json.JSONObject;
 import org.w3c.dom.Document;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
-import com.genius.petr.breeer.R;
-import com.genius.petr.breeer.database.DatabaseRoomManager;
 import com.google.android.gms.maps.model.LatLng;
 
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
 public class GMapV2DirectionAsyncTask extends AsyncTask<String, Void, Document> {
 
     private final static String TAG = GMapV2DirectionAsyncTask.class.getSimpleName();
     private Handler handler;
-    private LatLng  start, end;
+    private LatLng start, end;
     private String mode;
-    private Context context;
 
     public GMapV2DirectionAsyncTask(Handler handler, LatLng start, LatLng end, String mode) {
         this.start = start;
@@ -46,59 +41,35 @@ public class GMapV2DirectionAsyncTask extends AsyncTask<String, Void, Document> 
                 + "&destination=" + end.latitude + "," + end.longitude
                 + "&sensor=false&units=metric&mode=" + mode;
         Log.d("url", url);
-
-        RequestQueue queue = Volley.newRequestQueue(context);
-
-        JsonObjectRequest jsObjRequest = new JsonObjectRequest
-                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
-
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        //this is called on UI thread
-                        Log.i(TAG,"Response is: "+ response.toString().substring(0, 500));
-                        //updateSQLite(response, context);
-                        DatabaseRoomManager.UpdateDbAsync task = new DatabaseRoomManager.UpdateDbAsync(database, response, listener);
-                        task.execute();
-                    }
-                }, new Response.ErrorListener() {
-
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e(TAG, "That didn't work");
-                    }
-                });
-
-        // Add the request to the RequestQueue.
-        queue.add(jsObjRequest);
-
         try {
-            HttpClient httpClient = new DefaultHttpClient();
-            HttpContext localContext = new BasicHttpContext();
-            HttpPost httpPost = new HttpPost(url);
-            HttpResponse response = httpClient.execute(httpPost, localContext);
-            InputStream in = response.getEntity().getContent();
+            URL obj = new URL(url);
+            HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+            con.setRequestMethod("GET");
+            con.setDoOutput(true);
+            int responseCode = con.getResponseCode();
+            System.out.println("\nSending 'Get' request to URL : " +    url+"--"+responseCode);
+
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            StringBuffer response = new StringBuffer();
+
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+
+            System.out.println("Response : -- " + response.toString());
+            String msg = response.toString();
+
             DocumentBuilder builder = DocumentBuilderFactory.newInstance()
                     .newDocumentBuilder();
-            Document doc = builder.parse(in);
+            Document doc = builder.parse(msg);
             return doc;
         } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
-    }
-
-    private void getDirectionFromDirectionApiServer(String url){
-        GsonRequest<DirectionObject> serverRequest = new GsonRequest<DirectionObject>(
-                Request.Method.GET,
-                url,
-                DirectionObject.class,
-                createRequestSuccessListener(),
-                createRequestErrorListener());
-        serverRequest.setRetryPolicy(new DefaultRetryPolicy(
-                Helper.MY_SOCKET_TIMEOUT_MS,
-                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
-        VolleySingleton.getInstance(getApplicationContext()).addToRequestQueue(serverRequest);
     }
 
     @Override
@@ -120,3 +91,4 @@ public class GMapV2DirectionAsyncTask extends AsyncTask<String, Void, Document> 
     @Override
     protected void onProgressUpdate(Void... values) {
     }
+}

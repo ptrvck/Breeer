@@ -12,7 +12,9 @@ import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Looper;
+import android.os.Message;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
@@ -57,12 +59,24 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.maps.android.clustering.ClusterManager;
 
+import org.w3c.dom.Document;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 /**
  * Created by Petr on 24. 2. 2018.
@@ -93,6 +107,7 @@ public class FragmentMap
 
     private LocationRequest mLocationRequest;
     private FusedLocationProviderClient mFusedLocationClient;
+    private LatLng lastLocation = null;
 
     private static final int STATE_PLACES = 0;
     private static final int STATE_CIRCUIT = 1;
@@ -287,7 +302,6 @@ public class FragmentMap
                     Manifest.permission.ACCESS_FINE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED) {
                 //Location Permission already granted
-                mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
                 this.map.setMyLocationEnabled(true);
                 Log.i(TAG, "location permission granted");
             } else {
@@ -297,7 +311,6 @@ public class FragmentMap
             }
         }
         else {
-            mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
             googleMap.setMyLocationEnabled(true);
         }
 
@@ -341,6 +354,7 @@ public class FragmentMap
 
 
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
+    public static final int MY_PERMISSIONS_REQUEST_LOCATION_NAVIGATION = 100;
 
     private void checkLocationPermission() {
         if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
@@ -378,6 +392,42 @@ public class FragmentMap
         }
     }
 
+    private void checkLocationPermissionForNavigation() {
+        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // Should we show an explanation?
+            if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
+
+                Log.i(TAG, "show explanation");
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+                new AlertDialog.Builder(getContext())
+                        .setTitle("Location Permission Needed")
+                        .setMessage("This app needs the Location permission, please accept to use location functionality")
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                //Prompt the user once explanation has been shown
+                                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                                        MY_PERMISSIONS_REQUEST_LOCATION_NAVIGATION );
+                            }
+                        })
+                        .create()
+                        .show();
+
+
+            } else {
+                Log.i(TAG, "explanation not needed");
+                // No explanation needed, we can request the permission.
+                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        MY_PERMISSIONS_REQUEST_LOCATION_NAVIGATION );
+            }
+        }
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
@@ -392,8 +442,40 @@ public class FragmentMap
                             Manifest.permission.ACCESS_FINE_LOCATION)
                             == PackageManager.PERMISSION_GRANTED) {
 
-                        mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
                         map.setMyLocationEnabled(true);
+                    }
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                    Toast.makeText(getContext(), "permission denied", Toast.LENGTH_LONG).show();
+                }
+                return;
+            }
+
+            case MY_PERMISSIONS_REQUEST_LOCATION_NAVIGATION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // location-related task you need to do.
+                    if (ContextCompat.checkSelfPermission(getContext(),
+                            Manifest.permission.ACCESS_FINE_LOCATION)
+                            == PackageManager.PERMISSION_GRANTED) {
+                        mFusedLocationClient.getLastLocation()
+                                .addOnSuccessListener(new OnSuccessListener<Location>() {
+                                    @Override
+                                    public void onSuccess(Location location) {
+                                        // Got last known location. In some rare situations this can be null.
+                                        if (location != null) {
+                                            // Logic to handle location object
+                                            startNavigationToActivePlace(new LatLng(location.getLatitude(), location.getLongitude()));
+                                        }
+                                    }
+                                });
+
                     }
 
                 } else {
@@ -412,15 +494,7 @@ public class FragmentMap
     }
 
 
-    LocationCallback mLocationCallback = new LocationCallback(){
-        @Override
-        public void onLocationResult(LocationResult locationResult) {
-            for (Location location : locationResult.getLocations()) {
-               // Log.i(TAG, "Location: " + location.getLatitude() + " " + location.getLongitude());
-            }
-        };
 
-    };
 
 
     public boolean onMarkerClick(Marker marker) {
@@ -539,6 +613,138 @@ public class FragmentMap
         viewPager.setVisibility(View.GONE);
     }
 
+
+    private void navigateToActivePlace() {
+
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (ContextCompat.checkSelfPermission(getContext(),
+                    Manifest.permission.ACCESS_FINE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED) {
+                //Location Permission already granted
+                mFusedLocationClient.getLastLocation()
+                        .addOnSuccessListener(new OnSuccessListener<Location>() {
+                            @Override
+                            public void onSuccess(Location location) {
+                                // Got last known location. In some rare situations this can be null.
+                                if (location != null) {
+                                    // Logic to handle location object
+                                    startNavigationToActivePlace(new LatLng(location.getLatitude(), location.getLongitude()));
+                                }
+                            }
+                        });
+            } else {
+                //Request Location Permission
+                Log.i(TAG, "requesting location permission");
+                checkLocationPermissionForNavigation();
+            }
+        }
+        else {
+            mFusedLocationClient.getLastLocation()
+                    .addOnSuccessListener(new OnSuccessListener<Location>() {
+                        @Override
+                        public void onSuccess(Location location) {
+                            // Got last known location. In some rare situations this can be null.
+                            if (location != null) {
+                                // Logic to handle location object
+                                startNavigationToActivePlace(new LatLng(location.getLatitude(), location.getLongitude()));
+                            }
+                        }
+                    });
+        }
+
+    }
+
+    private void startNavigationToActivePlace(LatLng userLocation){
+        new GMapV2DirectionAsyncTask(userLocation, activePlace.getPosition(), GMapV2Direction.MODE_WALKING).execute();
+    }
+
+    private class GMapV2DirectionAsyncTask extends AsyncTask<String, Void, Document> {
+
+        private final String TAG = com.genius.petr.breeer.map.GMapV2DirectionAsyncTask.class.getSimpleName();
+        private LatLng start, end;
+        private String mode;
+
+        public GMapV2DirectionAsyncTask(LatLng start, LatLng end, String mode) {
+            this.start = start;
+            this.end = end;
+            this.mode = mode;
+        }
+
+        @Override
+        protected Document doInBackground(String... params) {
+
+            String url = "http://maps.googleapis.com/maps/api/directions/xml?"
+                    + "origin=" + start.latitude + "," + start.longitude
+                    + "&destination=" + end.latitude + "," + end.longitude
+                    + "&sensor=false&units=metric&mode=" + mode;
+            Log.d("url", url);
+            try {
+                URL obj = new URL(url);
+                HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+                con.setRequestMethod("GET");
+                con.setDoOutput(true);
+                int responseCode = con.getResponseCode();
+                System.out.println("\nSending 'Get' request to URL : " +    url+"--"+responseCode);
+
+                /*
+                BufferedReader in = new BufferedReader(
+                        new InputStreamReader(con.getInputStream()));
+                String inputLine;
+                StringBuffer response = new StringBuffer();
+
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                in.close();
+
+
+                System.out.println("Response : -- " + response.toString());
+                String msg = response.toString();
+                */
+
+                DocumentBuilder builder = DocumentBuilderFactory.newInstance()
+                        .newDocumentBuilder();
+                Document doc = builder.parse(con.getInputStream());
+                return doc;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Document doc) {
+            if (doc != null) {
+                try {
+                    Log.d("route", "doc != null");
+                    GMapV2Direction md = new GMapV2Direction();
+                    ArrayList<LatLng> directionPoint = md.getDirection(doc);
+                    PolylineOptions rectLine = new PolylineOptions().width(15).color(getActivity().getResources().getColor(R.color.colorNatureAccent));
+
+                    for (int i = 0; i < directionPoint.size(); i++) {
+                        rectLine.add(directionPoint.get(i));
+                        Log.d("route", "point");
+                    }
+                    Polyline polylin = map.addPolyline(rectLine);
+                    md.getDurationText(doc);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else {
+                Log.d(TAG, "---- GMapV2DirectionAsyncTask ERROR ----");
+            }
+        }
+
+        @Override
+        protected void onPreExecute() {
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... values) {
+        }
+    }
+
+
     public void selectPlace(final Place place) {
         hideCurrentState();
 
@@ -566,7 +772,7 @@ public class FragmentMap
             closeButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    closePlace();
+                    navigateToActivePlace();
                 }
             });
 
