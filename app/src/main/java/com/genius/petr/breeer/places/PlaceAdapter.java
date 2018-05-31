@@ -59,7 +59,7 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.PlaceViewHol
         PlaceViewHolder(View view) {
             super(view);
             tvName = view.findViewById(R.id.place_item_name);
-            tvId = view.findViewById(R.id.place_item_id);
+            tvId = view.findViewById(R.id.place_distance);
         }
     }
 
