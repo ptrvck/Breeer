@@ -9,7 +9,7 @@
     <TableRow>
         <TextView
             android:layout_column="0"
-            android:id="@+id/circuitName"
+            android:id="@+id/placeName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Small Circuitlkiokjbnhjvghcvzhjvztvgadadawdhvgv"
@@ -24,7 +24,7 @@
 
         <Button
             android:layout_column="2"
-            android:id="@+id/button_closeCircuit"
+            android:id="@+id/button_stopNavigation"
             android:text="stop navigation"
             android:layout_marginTop="6dp"
             android:layout_marginRight="12dp"

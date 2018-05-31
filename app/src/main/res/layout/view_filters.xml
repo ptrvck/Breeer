@@ -21,8 +21,8 @@
     android:background="@color/colorBackgroundLight"
     android:paddingTop="10dp"
     android:paddingBottom="10dp"
-    android:paddingLeft="15dp"
-    android:paddingRight="30dp">
+    android:paddingLeft="10dp"
+    android:paddingRight="20dp">
 
     <CheckBox
         android:id="@+id/cb_0"

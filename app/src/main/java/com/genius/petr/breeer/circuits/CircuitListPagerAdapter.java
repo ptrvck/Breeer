@@ -47,7 +47,7 @@ public class CircuitListPagerAdapter extends PagerAdapter {
         tvName.setText(circuit.getName());
 
         TextView tvDescription = layout.findViewById(R.id.tv_description);
-        //tvDescription.setText(circuit.getDescription());
+        tvDescription.setText(circuit.getDescription());
 
         ImageView backgroundLayout = layout.findViewById(R.id.backgroundImage);
         int color = ContextCompat.getColor(context, PlaceConstants.CATEGORY_COLORS.get(circuit.getType()));

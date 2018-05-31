@@ -114,6 +114,8 @@ public class FragmentPlaceDetail extends Fragment {
             }
         }
 
+        view.findViewById(R.id.loadingOverlay).setVisibility(View.GONE);
+
         return view;
     }
 

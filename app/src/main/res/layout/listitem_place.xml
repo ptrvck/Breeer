@@ -33,12 +33,12 @@
     </RelativeLayout>
 
     <TextView
-        android:id="@+id/place_item_id"
+        android:id="@+id/place_distance"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="25dp"
         android:text="3"
-        android:visibility="gone"
+        android:textColor="@color/colorWhite"
         android:textAppearance="?android:attr/textAppearanceSmall"/>
 
 </LinearLayout>

@@ -46,8 +46,8 @@
         style="@style/buttonStyle"/>
 
     <Button
-        android:id="@+id/button_closePlace"
-        android:text="close"
+        android:id="@+id/button_startNavigation"
+        android:text="navigation"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/placeDescription"

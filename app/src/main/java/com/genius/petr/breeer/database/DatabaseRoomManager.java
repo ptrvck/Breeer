@@ -51,6 +51,7 @@ public class DatabaseRoomManager {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                        Log.e(TAG, error.toString());
                         Log.e(TAG, "That didn't work");
                     }
                 });

@@ -74,4 +74,13 @@
         android:background="@drawable/rounded_button"
         style="@style/buttonStyle"/>
 
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/colorWhite"
+        android:id="@+id/loadingOverlay"
+        android:elevation="10dp"/>
+
+
 </RelativeLayout>

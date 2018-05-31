@@ -12,9 +12,7 @@ import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
@@ -43,9 +41,7 @@ import com.genius.petr.breeer.database.AppDatabase;
 import com.genius.petr.breeer.database.Place;
 import com.genius.petr.breeer.database.PlaceConstants;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -54,7 +50,6 @@ import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
@@ -62,14 +57,15 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.tasks.OnCanceledListener;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.maps.android.clustering.ClusterManager;
 
 import org.w3c.dom.Document;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -114,6 +110,7 @@ public class FragmentMap
     private static final int STATE_CIRCUIT = 1;
     private static final int STATE_SINGLE = 2;
     private static final int STATE_NAVIGATION = 3;
+    private static final int STATE_NAVIGATION_DETAIL = 4;
     private int currentState = STATE_PLACES;
 
 
@@ -149,7 +146,7 @@ public class FragmentMap
                 Log.i("circuitTest", "restored id: " + id);
                 activeCircuit = new CircuitMapViewModel(id);
             }
-            if(currentState == STATE_SINGLE) {
+            if(currentState == STATE_SINGLE || currentState == STATE_NAVIGATION || currentState == STATE_NAVIGATION_DETAIL) {
                 long id = savedInstanceState.getLong(SAVE_STATE_PLACE);
                 Log.i("placeTest", "restored id: " + id);
                 activePlaceId = id;
@@ -320,6 +317,8 @@ public class FragmentMap
             final RelativeLayout placeDetail = getView().findViewById(R.id.placeLayout);
             placeDetail.setVisibility(View.GONE);
         }
+
+
         // For showing a move to my location button1
         //googleMap.setMyLocationEnabled(true);
 
@@ -348,7 +347,7 @@ public class FragmentMap
             showCircuit(activeCircuit.getId());
         }
 
-        if (currentState == STATE_SINGLE) {
+        if (currentState == STATE_SINGLE || currentState == STATE_NAVIGATION || currentState == STATE_NAVIGATION_DETAIL) {
             selectPlace(activePlaceId);
         }
     }
@@ -467,17 +466,18 @@ public class FragmentMap
                             Manifest.permission.ACCESS_FINE_LOCATION)
                             == PackageManager.PERMISSION_GRANTED) {
                         mFusedLocationClient.getLastLocation()
-                                .addOnSuccessListener(new OnSuccessListener<Location>() {
+                                .addOnCompleteListener(new OnCompleteListener<Location>() {
                                     @Override
-                                    public void onSuccess(Location location) {
-                                        // Got last known location. In some rare situations this can be null.
-                                        if (location != null) {
-                                            // Logic to handle location object
+                                    public void onComplete(@NonNull Task<Location> task) {
+                                        if (task.isSuccessful() && task.getResult() != null) {
+                                            Location location = task.getResult();
                                             startNavigationToActivePlace(new LatLng(location.getLatitude(), location.getLongitude()));
+
+                                        } else {
+                                            navigationFail();
                                         }
                                     }
                                 });
-
                     }
 
                 } else {
@@ -505,7 +505,7 @@ public class FragmentMap
             return true;
         }
 
-        if (currentState == STATE_PLACES) {
+        if (currentState == STATE_PLACES || currentState == STATE_NAVIGATION) {
             Log.i(TAG, "onMarkerClick");
             //cluster
             if (marker.getTitle() == null) {
@@ -595,6 +595,11 @@ public class FragmentMap
             return;
         }
 
+        if (currentState == STATE_NAVIGATION_DETAIL) {
+            hidePlaceDetail();
+            return;
+        }
+
         if (currentState == STATE_CIRCUIT) {
             deactivateCircuitNode();
             return;
@@ -615,22 +620,32 @@ public class FragmentMap
         viewPager.setVisibility(View.GONE);
     }
 
+    private void navigationFail(){
+        RelativeLayout placeDetail = getView().findViewById(R.id.placeLayout);
+        Button navigateButton = placeDetail.findViewById(R.id.button_startNavigation);
+        navigateButton.setEnabled(true);
+        Toast.makeText(getContext(), "Your phone has no idea where you are.", Toast.LENGTH_LONG).show();
+    }
 
     private void navigateToActivePlace() {
+        Log.i("route", "clicked");
 
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Log.i("route", "new");
             if (ContextCompat.checkSelfPermission(getContext(),
                     Manifest.permission.ACCESS_FINE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED) {
                 //Location Permission already granted
                 mFusedLocationClient.getLastLocation()
-                        .addOnSuccessListener(new OnSuccessListener<Location>() {
+                        .addOnCompleteListener(new OnCompleteListener<Location>() {
                             @Override
-                            public void onSuccess(Location location) {
-                                // Got last known location. In some rare situations this can be null.
-                                if (location != null) {
-                                    // Logic to handle location object
+                            public void onComplete(@NonNull Task<Location> task) {
+                                if (task.isSuccessful() && task.getResult() != null) {
+                                    Location location = task.getResult();
                                     startNavigationToActivePlace(new LatLng(location.getLatitude(), location.getLongitude()));
+
+                                } else {
+                                    navigationFail();
                                 }
                             }
                         });
@@ -641,122 +656,150 @@ public class FragmentMap
             }
         }
         else {
+            Log.i("route", "old");
+
             mFusedLocationClient.getLastLocation()
-                    .addOnSuccessListener(new OnSuccessListener<Location>() {
-                        @Override
-                        public void onSuccess(Location location) {
-                            // Got last known location. In some rare situations this can be null.
-                            if (location != null) {
-                                // Logic to handle location object
-                                startNavigationToActivePlace(new LatLng(location.getLatitude(), location.getLongitude()));
-                            }
-                        }
-                    });
+            .addOnCompleteListener(new OnCompleteListener<Location>() {
+                @Override
+                public void onComplete(@NonNull Task<Location> task) {
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        Location location = task.getResult();
+                        startNavigationToActivePlace(new LatLng(location.getLatitude(), location.getLongitude()));
+
+                    } else {
+                        navigationFail();
+                    }
+                }
+            });
         }
 
     }
+
+
+    private void activateStateNavigation(NavResponse response) {
+
+        currentState = STATE_NAVIGATION;
+
+        activePlace = response.getPlace();
+        activePlaceId = activePlace.getId();
+
+        MarkerOptions markerOptions = new MarkerOptions().position(activePlace.getPosition()).title(Long.toString(activePlace.getId()))
+                .icon(MapUtils.bitmapDescriptorFromVector(getContext(), PlaceConstants.CATEGORY_MARKERS.get(activePlace.getCategory())));
+
+        if(map!=null) {
+            activeMarker = map.addMarker(markerOptions);
+
+            final TableLayout navigationLayout = getView().findViewById(R.id.navigationLayout);
+
+            int colorId = PlaceConstants.CATEGORY_COLORS.get(activePlace.getCategory());
+            navigationLayout.setBackgroundColor(getActivity().getResources().getColor(colorId));
+
+            Button stopButton = navigationLayout.findViewById(R.id.button_stopNavigation);
+
+            stopButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    hideCurrentState();
+                    activateStatePlaces();
+                }
+            });
+
+
+            TextView nameTextView = navigationLayout.findViewById(R.id.placeName);
+            nameTextView.setText(activePlace.getName());
+
+
+            navigationLayout.setVisibility(View.VISIBLE);
+            navigationLayout.getViewTreeObserver().addOnGlobalLayoutListener(
+                    new ViewTreeObserver.OnGlobalLayoutListener(){
+
+                        @Override
+                        public void onGlobalLayout() {
+                            Log.i(TAG, "on global layout");
+                            // gets called after layout has been done but before display
+                            navigationLayout.getViewTreeObserver().removeOnGlobalLayoutListener( this );
+
+                            int height = navigationLayout.getHeight();
+                            map.setPadding(0, height, 0, 0);
+                            int viewHeight = getView().getHeight();
+
+
+                            navigationLayout.setTranslationY(-height);
+                            navigationLayout.animate().translationY(0).setDuration(700).setListener(new AnimatorListenerAdapter() {
+                                @Override
+                                public void onAnimationEnd(Animator animation) {
+                                    super.onAnimationEnd(animation);
+                                    navigationLayout.clearAnimation();
+                                    navigationLayout.animate().setListener(null);
+                                }
+
+                                @Override
+                                public void onAnimationCancel(Animator animation) {
+                                    animation.removeAllListeners();
+                                }
+                            });
+                        }
+
+                    });
+
+
+        }
+
+    }
+
+    private void startNavigation(NavResponse navResponse) {
+        if (map == null) {
+            return;
+        }
+
+
+        if (navResponse == null) {
+            Toast.makeText(getContext(), "Unable to find directions. Check your internet connection and try again please.", Toast.LENGTH_LONG).show();
+
+            RelativeLayout placeDetail = getView().findViewById(R.id.placeLayout);
+            if (placeDetail.getVisibility() == View.VISIBLE) {
+                Button navigateButton = placeDetail.findViewById(R.id.button_startNavigation);
+                navigateButton.setEnabled(true);
+                return;
+            }
+        }
+
+        hideCurrentState();
+        activateStateNavigation(navResponse);
+
+        Place place = navResponse.getPlace();
+        ArrayList<LatLng> navPoints = navResponse.getNavPoints();
+
+        int colorId = PlaceConstants.CATEGORY_COLORS.get(place.getCategory());
+        PolylineOptions rectLine = new PolylineOptions().width(8).color(getActivity().getResources().getColor(colorId));
+
+        Log.d("route", "navPoints: " + navPoints.size());
+        for (LatLng navPoint : navPoints) {
+            rectLine.add(navPoint);
+        }
+
+        Polyline route = map.addPolyline(rectLine);
+    }
+
 
     private void startNavigationToActivePlace(LatLng userLocation){
-        new GMapV2DirectionAsyncTask(userLocation, activePlace.getPosition(), GMapV2Direction.MODE_WALKING).execute();
+        Log.i("route", "starting task");
+        new GMapV2DirectionAsyncTask(FragmentMap.this, AppDatabase.getDatabase(getContext().getApplicationContext()), activePlace.id, userLocation).execute();
     }
-
-    private class GMapV2DirectionAsyncTask extends AsyncTask<String, Void, Document> {
-
-        private final String TAG = com.genius.petr.breeer.map.GMapV2DirectionAsyncTask.class.getSimpleName();
-        private LatLng start, end;
-        private String mode;
-
-        public GMapV2DirectionAsyncTask(LatLng start, LatLng end, String mode) {
-            this.start = start;
-            this.end = end;
-            this.mode = mode;
-        }
-
-        @Override
-        protected Document doInBackground(String... params) {
-
-            String url = "http://maps.googleapis.com/maps/api/directions/xml?"
-                    + "origin=" + start.latitude + "," + start.longitude
-                    + "&destination=" + end.latitude + "," + end.longitude
-                    + "&sensor=false&units=metric&mode=" + mode;
-            Log.d("url", url);
-            try {
-                URL obj = new URL(url);
-                HttpURLConnection con = (HttpURLConnection) obj.openConnection();
-                con.setRequestMethod("GET");
-                con.setDoOutput(true);
-                int responseCode = con.getResponseCode();
-                System.out.println("\nSending 'Get' request to URL : " +    url+"--"+responseCode);
-
-                /*
-                BufferedReader in = new BufferedReader(
-                        new InputStreamReader(con.getInputStream()));
-                String inputLine;
-                StringBuffer response = new StringBuffer();
-
-                while ((inputLine = in.readLine()) != null) {
-                    response.append(inputLine);
-                }
-                in.close();
-
-
-                System.out.println("Response : -- " + response.toString());
-                String msg = response.toString();
-                */
-
-                DocumentBuilder builder = DocumentBuilderFactory.newInstance()
-                        .newDocumentBuilder();
-                Document doc = builder.parse(con.getInputStream());
-                return doc;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Document doc) {
-            if (doc != null) {
-                try {
-                    Log.d("route", "doc != null");
-                    GMapV2Direction md = new GMapV2Direction();
-                    ArrayList<LatLng> directionPoint = md.getDirection(doc);
-
-                    int colorId = PlaceConstants.CATEGORY_COLORS.get(activePlace.getCategory());
-                    PolylineOptions rectLine = new PolylineOptions().width(8).color(getActivity().getResources().getColor(colorId));
-
-                    for (int i = 0; i < directionPoint.size(); i++) {
-                        rectLine.add(directionPoint.get(i));
-                        Log.d("route", "point");
-                    }
-                    Polyline polyline = map.addPolyline(rectLine);
-                    md.getDurationText(doc);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            } else {
-                Log.d(TAG, "---- GMapV2DirectionAsyncTask ERROR ----");
-            }
-        }
-
-        @Override
-        protected void onPreExecute() {
-        }
-
-        @Override
-        protected void onProgressUpdate(Void... values) {
-        }
-    }
-
 
 
 
     public void selectPlace(final Place place) {
-        hideCurrentState();
+
 
         Log.i(TAG, "showing place: " + place.getName());
 
-        currentState = STATE_SINGLE;
+        if (currentState == STATE_NAVIGATION || currentState == STATE_NAVIGATION_DETAIL) {
+            currentState = STATE_NAVIGATION_DETAIL;
+        } else {
+            hideCurrentState();
+            currentState = STATE_SINGLE;
+        }
         activePlace = place;
         activePlaceId = place.getId();
 
@@ -765,20 +808,25 @@ public class FragmentMap
 
         if(map!=null) {
             Log.i(TAG, "map ok");
-            Marker marker = map.addMarker(markerOptions);
+            if(activeMarker != null) {
+                activeMarker.remove();
+            }
+            activeMarker = map.addMarker(markerOptions);
 
             final RelativeLayout placeDetail = getView().findViewById(R.id.placeLayout);
             TextView tvName = placeDetail.findViewById(R.id.placeName);
             TextView tvCategory = placeDetail.findViewById(R.id.placeCategory);
             TextView tvDescription = placeDetail.findViewById(R.id.placeDescription);
-            Button closeButton = placeDetail.findViewById(R.id.button_closePlace);
+            final Button navigateButton = placeDetail.findViewById(R.id.button_startNavigation);
             Button detailButton = placeDetail.findViewById(R.id.button_detail);
 
 
-            closeButton.setOnClickListener(new View.OnClickListener() {
+            navigateButton.setEnabled(true);
+            navigateButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     navigateToActivePlace();
+                    navigateButton.setEnabled(false);
                 }
             });
 
@@ -871,8 +919,6 @@ public class FragmentMap
 
                     });
 
-
-            Log.i(TAG, "showing marker: " + marker.getId());
         }
     }
 
@@ -911,9 +957,18 @@ public class FragmentMap
 
     private void hidePlaceDetail(){
         if (map != null) {
-            map.clear();
+
+            if (currentState == STATE_NAVIGATION_DETAIL) {
+                activeMarker.remove();
+                MarkerOptions markerOptions = new MarkerOptions().position(activePlace.getPosition()).title(Long.toString(activePlace.getId()))
+                        .icon(MapUtils.bitmapDescriptorFromVector(getContext(), PlaceConstants.CATEGORY_MARKERS.get(activePlace.getCategory())));
+                activeMarker = map.addMarker(markerOptions);
+                currentState = STATE_NAVIGATION;
+            } else {
+                map.clear();
+                activePlace = null;
+            }
         }
-        activePlace = null;
 
         final RelativeLayout placeDetail = getView().findViewById(R.id.placeLayout);
         int height = placeDetail.getHeight();
@@ -977,6 +1032,14 @@ public class FragmentMap
         if (currentState == STATE_SINGLE) {
             outState.putLong(SAVE_STATE_PLACE, activePlace.getId());
         }
+
+        if (currentState == STATE_NAVIGATION) {
+            outState.putLong(SAVE_STATE_PLACE, activePlace.getId());
+        }
+
+        if (currentState == STATE_NAVIGATION_DETAIL) {
+            outState.putLong(SAVE_STATE_PLACE, activePlace.getId());
+        }
     }
 
     private  void addClusters(List<PlaceCluster> clusters){
@@ -1030,6 +1093,14 @@ public class FragmentMap
         }
 
         if (currentState == STATE_NAVIGATION) {
+            TableLayout navigationLayout = getView().findViewById(R.id.navigationLayout);
+            navigationLayout.setVisibility(View.GONE);
+            if (map != null) {
+                map.clear();
+            }
+        }
+
+        if (currentState == STATE_NAVIGATION_DETAIL) {
             TableLayout navigationLayout = getView().findViewById(R.id.navigationLayout);
             navigationLayout.setVisibility(View.GONE);
             if (map != null) {
@@ -1258,6 +1329,84 @@ public class FragmentMap
         }
     }
 
+    private static class GMapV2DirectionAsyncTask extends AsyncTask<String, Void, NavResponse> {
+
+        private LatLng start, end;
+        private String mode;
+        private WeakReference<FragmentMap> fragment;
+        private final AppDatabase mDb;
+        private long placeId;
+        private String apiKey;
+
+        public GMapV2DirectionAsyncTask(FragmentMap fragment, AppDatabase db, long id, LatLng start) {
+            this.fragment = new WeakReference<>(fragment);
+            this.mDb = db;
+            this.placeId = id;
+
+            this.apiKey = fragment.getContext().getResources().getString(R.string.google_maps_key);
+
+            this.start = start;
+            this.mode = GMapV2DirectionParser.MODE_WALKING;
+        }
+
+        @Override
+        protected NavResponse doInBackground(String... params) {
+            Place place = mDb.place().selectByIdSynchronous(placeId);
+            this.end = place.getPosition();
+
+            String url = "https://maps.googleapis.com/maps/api/directions/xml?"
+                    + "origin=" + start.latitude + "," + start.longitude
+                    + "&destination=" + end.latitude + "," + end.longitude
+                    + "&sensor=false&units=metric&mode=" + mode
+                    +"&key=" + apiKey;
+            Log.d("url", url);
+            try {
+                URL obj = new URL(url);
+                HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+                con.setRequestMethod("GET");
+                con.setDoOutput(true);
+                int responseCode = con.getResponseCode();
+                Log.d("route", "Sending 'Get' request to URL : " +    url+"--"+responseCode);
+
+                DocumentBuilder builder = DocumentBuilderFactory.newInstance()
+                        .newDocumentBuilder();
+                Document doc = builder.parse(con.getInputStream());
+
+                GMapV2DirectionParser md = new GMapV2DirectionParser();
+                ArrayList<LatLng> directionPoint = md.getDirection(doc);
+
+                return new NavResponse(place, directionPoint);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(NavResponse navResponse) {
+            try {
+                Log.d("route", "doc != null");
+
+
+                final FragmentMap fragment = this.fragment.get();
+                if (fragment != null) {
+                    fragment.startNavigation(navResponse);
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        protected void onPreExecute() {
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... values) {
+        }
+    }
+
     //returns true if back was handled
     public boolean backPressed(){
 
@@ -1278,4 +1427,5 @@ public class FragmentMap
         }
         return false;
     }
+
 }
