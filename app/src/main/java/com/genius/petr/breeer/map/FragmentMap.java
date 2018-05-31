@@ -102,7 +102,6 @@ public class FragmentMap
     private long activePlaceId = -1;
     private float currentZoom = -1;
 
-    private LocationRequest mLocationRequest;
     private FusedLocationProviderClient mFusedLocationClient;
     private LatLng lastLocation = null;
 
@@ -291,27 +290,9 @@ public class FragmentMap
         map.setOnMapClickListener(this);
         map.setOnMarkerClickListener(this);
 
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(2000); // two minute interval
-        mLocationRequest.setFastestInterval(500);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ContextCompat.checkSelfPermission(getContext(),
-                    Manifest.permission.ACCESS_FINE_LOCATION)
-                    == PackageManager.PERMISSION_GRANTED) {
-                //Location Permission already granted
-                this.map.setMyLocationEnabled(true);
-                Log.i(TAG, "location permission granted");
-            } else {
-                //Request Location Permission
-                Log.i(TAG, "requesting location permission");
-                checkLocationPermission();
-            }
-        }
-        else {
-            googleMap.setMyLocationEnabled(true);
-        }
+        MainActivity activity = (MainActivity)getActivity();
+        activity.tryToEnableLocation();
 
         if (currentState == STATE_SINGLE) {
             final RelativeLayout placeDetail = getView().findViewById(R.id.placeLayout);
@@ -351,151 +332,6 @@ public class FragmentMap
             selectPlace(activePlaceId);
         }
     }
-
-
-
-    public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
-    public static final int MY_PERMISSIONS_REQUEST_LOCATION_NAVIGATION = 100;
-
-    private void checkLocationPermission() {
-        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            // Should we show an explanation?
-            if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
-
-                Log.i(TAG, "show explanation");
-
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-                new AlertDialog.Builder(getContext())
-                        .setTitle("Location Permission Needed")
-                        .setMessage("This app needs the Location permission, please accept to use location functionality")
-                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                //Prompt the user once explanation has been shown
-                                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                                        MY_PERMISSIONS_REQUEST_LOCATION );
-                            }
-                        })
-                        .create()
-                        .show();
-
-
-            } else {
-                Log.i(TAG, "explanation not needed");
-                // No explanation needed, we can request the permission.
-                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        MY_PERMISSIONS_REQUEST_LOCATION );
-            }
-        }
-    }
-
-    private void checkLocationPermissionForNavigation() {
-        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            // Should we show an explanation?
-            if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
-
-                Log.i(TAG, "show explanation");
-
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-                new AlertDialog.Builder(getContext())
-                        .setTitle("Location Permission Needed")
-                        .setMessage("This app needs the Location permission, please accept to use location functionality")
-                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                //Prompt the user once explanation has been shown
-                                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                                        MY_PERMISSIONS_REQUEST_LOCATION_NAVIGATION );
-                            }
-                        })
-                        .create()
-                        .show();
-
-
-            } else {
-                Log.i(TAG, "explanation not needed");
-                // No explanation needed, we can request the permission.
-                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        MY_PERMISSIONS_REQUEST_LOCATION_NAVIGATION );
-            }
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case MY_PERMISSIONS_REQUEST_LOCATION: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    // permission was granted, yay! Do the
-                    // location-related task you need to do.
-                    if (ContextCompat.checkSelfPermission(getContext(),
-                            Manifest.permission.ACCESS_FINE_LOCATION)
-                            == PackageManager.PERMISSION_GRANTED) {
-
-                        map.setMyLocationEnabled(true);
-                    }
-
-                } else {
-
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                    Toast.makeText(getContext(), "permission denied", Toast.LENGTH_LONG).show();
-                }
-                return;
-            }
-
-            case MY_PERMISSIONS_REQUEST_LOCATION_NAVIGATION: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    // permission was granted, yay! Do the
-                    // location-related task you need to do.
-                    if (ContextCompat.checkSelfPermission(getContext(),
-                            Manifest.permission.ACCESS_FINE_LOCATION)
-                            == PackageManager.PERMISSION_GRANTED) {
-                        mFusedLocationClient.getLastLocation()
-                                .addOnCompleteListener(new OnCompleteListener<Location>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<Location> task) {
-                                        if (task.isSuccessful() && task.getResult() != null) {
-                                            Location location = task.getResult();
-                                            startNavigationToActivePlace(new LatLng(location.getLatitude(), location.getLongitude()));
-
-                                        } else {
-                                            navigationFail();
-                                        }
-                                    }
-                                });
-                    }
-
-                } else {
-
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                    Toast.makeText(getContext(), "permission denied", Toast.LENGTH_LONG).show();
-                }
-                return;
-            }
-
-            // other 'case' lines to check for other
-            // permissions this app might request
-        }
-
-    }
-
-
 
 
 
@@ -620,7 +456,7 @@ public class FragmentMap
         viewPager.setVisibility(View.GONE);
     }
 
-    private void navigationFail(){
+    public void navigationFail(){
         RelativeLayout placeDetail = getView().findViewById(R.id.placeLayout);
         Button navigateButton = placeDetail.findViewById(R.id.button_startNavigation);
         navigateButton.setEnabled(true);
@@ -628,51 +464,9 @@ public class FragmentMap
     }
 
     private void navigateToActivePlace() {
-        Log.i("route", "clicked");
 
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Log.i("route", "new");
-            if (ContextCompat.checkSelfPermission(getContext(),
-                    Manifest.permission.ACCESS_FINE_LOCATION)
-                    == PackageManager.PERMISSION_GRANTED) {
-                //Location Permission already granted
-                mFusedLocationClient.getLastLocation()
-                        .addOnCompleteListener(new OnCompleteListener<Location>() {
-                            @Override
-                            public void onComplete(@NonNull Task<Location> task) {
-                                if (task.isSuccessful() && task.getResult() != null) {
-                                    Location location = task.getResult();
-                                    startNavigationToActivePlace(new LatLng(location.getLatitude(), location.getLongitude()));
-
-                                } else {
-                                    navigationFail();
-                                }
-                            }
-                        });
-            } else {
-                //Request Location Permission
-                Log.i(TAG, "requesting location permission");
-                checkLocationPermissionForNavigation();
-            }
-        }
-        else {
-            Log.i("route", "old");
-
-            mFusedLocationClient.getLastLocation()
-            .addOnCompleteListener(new OnCompleteListener<Location>() {
-                @Override
-                public void onComplete(@NonNull Task<Location> task) {
-                    if (task.isSuccessful() && task.getResult() != null) {
-                        Location location = task.getResult();
-                        startNavigationToActivePlace(new LatLng(location.getLatitude(), location.getLongitude()));
-
-                    } else {
-                        navigationFail();
-                    }
-                }
-            });
-        }
-
+        MainActivity activity = (MainActivity)getActivity();
+        activity.tryToNavigateToActivePlace();
     }
 
 
@@ -782,7 +576,7 @@ public class FragmentMap
     }
 
 
-    private void startNavigationToActivePlace(LatLng userLocation){
+    public void startNavigationToActivePlace(LatLng userLocation){
         Log.i("route", "starting task");
         new GMapV2DirectionAsyncTask(FragmentMap.this, AppDatabase.getDatabase(getContext().getApplicationContext()), activePlace.id, userLocation).execute();
     }
@@ -794,11 +588,20 @@ public class FragmentMap
 
         Log.i(TAG, "showing place: " + place.getName());
 
-        if (currentState == STATE_NAVIGATION || currentState == STATE_NAVIGATION_DETAIL) {
+        if ((currentState == STATE_NAVIGATION || currentState == STATE_NAVIGATION_DETAIL) && (place.getId() == activePlace.getId())) {
             currentState = STATE_NAVIGATION_DETAIL;
         } else {
             hideCurrentState();
             currentState = STATE_SINGLE;
+
+            int category = place.getCategory();
+            View f = filtersGrid.getChildAt(category);
+            if (f instanceof CheckBox) {
+                final CheckBox filter = (CheckBox) f;
+                filter.setChecked(true);
+            }
+
+
         }
         activePlace = place;
         activePlaceId = place.getId();
@@ -1426,6 +1229,14 @@ public class FragmentMap
             return true;
         }
         return false;
+    }
+
+    public void enableMyLocation() {
+        try {
+            map.setMyLocationEnabled(true);
+        } catch (SecurityException e) {
+
+        }
     }
 
 }

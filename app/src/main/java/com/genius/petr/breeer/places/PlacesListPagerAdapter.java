@@ -44,7 +44,7 @@ public class PlacesListPagerAdapter extends PagerAdapter {
 
         Log.i(TAG, "position: " + position);
 
-        final List<Place> places = viewModel.getPlacesOfCategory(position);
+        final List<PlaceViewModel> places = viewModel.getPlacesOfCategory(position);
         LayoutInflater inflater = LayoutInflater.from(context);
         ViewGroup layout = (ViewGroup) inflater.inflate(R.layout.view_place_list, collection, false);
         View background = layout.findViewById(R.id.background);

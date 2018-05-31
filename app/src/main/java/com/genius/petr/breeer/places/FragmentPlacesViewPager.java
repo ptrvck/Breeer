@@ -1,5 +1,6 @@
 package com.genius.petr.breeer.places;
 
+import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -21,6 +22,7 @@ import com.google.android.gms.maps.GoogleMap;
 import java.lang.ref.WeakReference;
 
 import static com.genius.petr.breeer.places.FragmentPlaceCategories.ARGUMENT_CATEGORY;
+import static com.genius.petr.breeer.places.FragmentPlaceCategories.ARGUMENT_LOCATION;
 
 /**
  * Created by Petr on 2. 4. 2018.
@@ -31,6 +33,8 @@ public class FragmentPlacesViewPager extends Fragment{
     private ViewPager viewPager;
     private TabLayout tabLayout;
     private int position = -1;
+
+    private Location location;
 
     private static final String TAG = "placesFragmentLog";
 
@@ -49,6 +53,8 @@ public class FragmentPlacesViewPager extends Fragment{
             Log.i(TAG, "args not empty");
             position = args.getInt(ARGUMENT_CATEGORY);
             Log.i(TAG, "arg: " + args.getInt(ARGUMENT_CATEGORY));
+            location = args.getParcelable(ARGUMENT_LOCATION);
+            Log.i(TAG, "arg loc: " + args.getParcelable(ARGUMENT_LOCATION));
         }
 
         viewPager = view.findViewById(R.id.viewpager_places);
@@ -60,7 +66,7 @@ public class FragmentPlacesViewPager extends Fragment{
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         AppDatabase db = AppDatabase.getDatabase(getActivity().getApplication());
-        ShowPlacesAsyncTask task = new ShowPlacesAsyncTask(this, db);
+        ShowPlacesAsyncTask task = new ShowPlacesAsyncTask(this, db, location);
         task.execute();
     }
 
@@ -177,15 +183,17 @@ public class FragmentPlacesViewPager extends Fragment{
 
         private WeakReference<FragmentPlacesViewPager> fragment;
         private final AppDatabase mDb;
+        private Location location;
 
-        public ShowPlacesAsyncTask(FragmentPlacesViewPager fragment, AppDatabase db) {
+        public ShowPlacesAsyncTask(FragmentPlacesViewPager fragment, AppDatabase db, Location location) {
             this.fragment = new WeakReference<>(fragment);
             this.mDb = db;
+            this.location = location;
         }
 
         @Override
         protected PlacesListViewModel doInBackground(final Void... params) {
-            PlacesListViewModel viewModel = new PlacesListViewModel(mDb);
+            PlacesListViewModel viewModel = new PlacesListViewModel(mDb, location);
             return viewModel;
         }
 

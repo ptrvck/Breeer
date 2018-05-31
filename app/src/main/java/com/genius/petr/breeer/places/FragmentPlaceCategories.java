@@ -20,6 +20,7 @@ public class FragmentPlaceCategories extends Fragment {
 
     private static final String TAG = "placeCategoriesFragment";
     public static final String ARGUMENT_CATEGORY = "category";
+    public static final String ARGUMENT_LOCATION = "location";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -41,7 +42,8 @@ public class FragmentPlaceCategories extends Fragment {
                 fragmentPlaces.setArguments(args);
 
                 MainActivity activity = (MainActivity) getActivity();
-                activity.showFragment(fragmentPlaces);
+
+                activity.showFragmentPlaces(fragmentPlaces);
             }
         });
 
