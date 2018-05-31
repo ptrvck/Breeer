@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/colorMiscAccent"
+    android:stretchColumns="0">
+
+    <TableRow>
+        <TextView
+            android:layout_column="0"
+            android:id="@+id/circuitName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Small Circuitlkiokjbnhjvghcvzhjvztvgadadawdhvgv"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textAppearance="@style/PlaceListPlaceTitle"
+            android:layout_marginLeft="15dp"
+            android:layout_marginRight="15dp"
+            android:layout_marginTop="10dp"
+            android:layout_weight="1"
+            android:layout_marginBottom="11dp"/>
+
+        <Button
+            android:layout_column="2"
+            android:id="@+id/button_closeCircuit"
+            android:text="stop navigation"
+            android:layout_marginTop="6dp"
+            android:layout_marginRight="12dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:background="@drawable/rounded_button_white"
+
+            style="@style/buttonWhiteSmallStyle"/>
+    </TableRow>
+</TableLayout>

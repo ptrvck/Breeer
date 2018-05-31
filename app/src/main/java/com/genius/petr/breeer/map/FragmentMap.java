@@ -31,6 +31,7 @@ import android.widget.GridLayout;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -112,6 +113,7 @@ public class FragmentMap
     private static final int STATE_PLACES = 0;
     private static final int STATE_CIRCUIT = 1;
     private static final int STATE_SINGLE = 2;
+    private static final int STATE_NAVIGATION = 3;
     private int currentState = STATE_PLACES;
 
 
@@ -719,13 +721,15 @@ public class FragmentMap
                     Log.d("route", "doc != null");
                     GMapV2Direction md = new GMapV2Direction();
                     ArrayList<LatLng> directionPoint = md.getDirection(doc);
-                    PolylineOptions rectLine = new PolylineOptions().width(15).color(getActivity().getResources().getColor(R.color.colorNatureAccent));
+
+                    int colorId = PlaceConstants.CATEGORY_COLORS.get(activePlace.getCategory());
+                    PolylineOptions rectLine = new PolylineOptions().width(8).color(getActivity().getResources().getColor(colorId));
 
                     for (int i = 0; i < directionPoint.size(); i++) {
                         rectLine.add(directionPoint.get(i));
                         Log.d("route", "point");
                     }
-                    Polyline polylin = map.addPolyline(rectLine);
+                    Polyline polyline = map.addPolyline(rectLine);
                     md.getDurationText(doc);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -743,6 +747,8 @@ public class FragmentMap
         protected void onProgressUpdate(Void... values) {
         }
     }
+
+
 
 
     public void selectPlace(final Place place) {
@@ -1021,6 +1027,17 @@ public class FragmentMap
 
         if (currentState == STATE_SINGLE) {
             hidePlaceDetail();
+        }
+
+        if (currentState == STATE_NAVIGATION) {
+            TableLayout navigationLayout = getView().findViewById(R.id.navigationLayout);
+            navigationLayout.setVisibility(View.GONE);
+            if (map != null) {
+                map.clear();
+            }
+            if (activePlace != null) {
+                hidePlaceDetail();
+            }
         }
     }
 

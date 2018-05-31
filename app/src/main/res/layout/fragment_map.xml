@@ -15,7 +15,9 @@
         android:id="@+id/circuitLayout"
         android:visibility="gone"/>
 
-
+    <include layout="@layout/layout_navigation"
+        android:id="@+id/navigationLayout"
+        android:visibility="gone"/>
 
     <include layout="@layout/view_place_map_detail"
         android:id="@+id/placeLayout"
