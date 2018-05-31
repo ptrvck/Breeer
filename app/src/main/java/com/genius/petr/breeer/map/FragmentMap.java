@@ -100,10 +100,6 @@ public class FragmentMap
     private Place activePlace;
     private Marker activeMarker = null;
     private long activePlaceId = -1;
-    private float currentZoom = -1;
-
-    private FusedLocationProviderClient mFusedLocationClient;
-    private LatLng lastLocation = null;
 
     private static final int STATE_PLACES = 0;
     private static final int STATE_CIRCUIT = 1;
@@ -124,8 +120,6 @@ public class FragmentMap
         rootView.findViewById(R.id.loadingOverlay).setVisibility(View.VISIBLE);
         ProgressBar progressBar = rootView.findViewById(R.id.progressBar);
         progressBar.getIndeterminateDrawable().setColorFilter(ContextCompat.getColor(getContext(), R.color.colorLightGray), PorterDuff.Mode.SRC_IN );
-
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getContext());
 
         mMapView = rootView.findViewById(R.id.mapView);
         mMapView.onCreate(savedInstanceState);
@@ -298,20 +292,6 @@ public class FragmentMap
             final RelativeLayout placeDetail = getView().findViewById(R.id.placeLayout);
             placeDetail.setVisibility(View.GONE);
         }
-
-
-        // For showing a move to my location button1
-        //googleMap.setMyLocationEnabled(true);
-
-        // For dropping a marker at a point on the Map
-        //LatLng sydney = new LatLng(-34, 151);
-        //googleMap.addMarker(new MarkerOptions().position(sydney).title("Marker Title").snippet("Marker Description"));
-
-        // For zooming automatically to the location of the marker
-        //CameraPosition cameraPosition = new CameraPosition.Builder().target(sydney).zoom(12).build();
-        //googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-
-
 
     }
 
