@@ -3,12 +3,14 @@ package com.genius.petr.breeer.map;
 import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -296,6 +298,30 @@ public class FragmentMap
             placeDetail.setVisibility(View.GONE);
         }
 
+        map.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
+            @Override
+            public boolean onMyLocationButtonClick() {
+                if (!isLocationAvailable()) {
+                    Toast.makeText(getContext(), "Your phone has no idea where you are. Are you sure it has enabled location?", Toast.LENGTH_LONG).show();
+                }
+                return false;
+            }
+        });
+
+    }
+
+    private boolean isLocationAvailable(){
+        boolean gps_enabled = false;
+        boolean network_enabled = false;
+        LocationManager lm = (LocationManager)getActivity().getSystemService(Context.LOCATION_SERVICE);
+        try {
+            gps_enabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        }catch (Exception ex){}
+        try{
+            network_enabled = lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        }catch (Exception ex){}
+
+        return (gps_enabled || network_enabled);
     }
 
     @Override
