@@ -1,14 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@color/colorBackgroundLight"
     android:orientation="vertical"
-    android:paddingLeft="15dp"
-    android:paddingRight="15dp"
     android:paddingTop="10dp"
     android:paddingBottom="20dp">
 
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:srcCompat="@drawable/arrow_left"
+        android:id="@+id/leftButton"
+        android:layout_centerVertical="true"
+        android:paddingBottom="60dp"
+        android:paddingTop="40dp"
+        android:paddingRight="20dp"
+        android:paddingLeft="10dp"
+        android:background="@color/colorTransparent"
+        />
     <TextView
         android:id="@+id/tv_name"
         android:layout_width="wrap_content"
@@ -17,7 +30,9 @@
         android:text="Měnínská brána"
         android:ellipsize="end"
         android:maxLines="1"
-        android:layout_marginBottom="10dp"/>
+        android:layout_marginBottom="10dp"
+        android:layout_toRightOf="@id/leftButton"
+        android:layout_toLeftOf="@id/rightButton"/>
 
     <TextView
         android:id="@+id/tv_description"
@@ -27,7 +42,10 @@
         android:maxLines="2"
         style="@style/BaseTextDescription"
         android:text="@string/dummyLong"
-        android:layout_marginBottom="20dp"/>
+        android:layout_marginBottom="20dp"
+        android:layout_toRightOf="@id/leftButton"
+        android:layout_below="@id/tv_name"
+        android:layout_toLeftOf="@id/rightButton"/>
 
     <Button
         android:id="@+id/button_detail"
@@ -35,6 +53,22 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/rounded_button"
-        style="@style/buttonStyle"/>
+        style="@style/buttonStyle"
+        android:layout_toRightOf="@id/leftButton"
+        android:layout_below="@id/tv_description"/>
 
-</LinearLayout>
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:srcCompat="@drawable/arrow_right"
+        android:id="@+id/rightButton"
+        android:layout_centerVertical="true"
+        android:layout_alignParentRight="true"
+        android:paddingBottom="60dp"
+        android:paddingTop="40dp"
+        android:paddingRight="10dp"
+        android:paddingLeft="20dp"
+        android:background="@color/colorTransparent"
+        />
+
+</RelativeLayout>

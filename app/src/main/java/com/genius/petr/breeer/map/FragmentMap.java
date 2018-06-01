@@ -75,6 +75,9 @@ import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import static android.support.v4.view.ViewPager.SCROLL_STATE_IDLE;
+import static android.support.v4.view.ViewPager.SCROLL_STATE_SETTLING;
+
 /**
  * Created by Petr on 24. 2. 2018.
  */
@@ -367,7 +370,7 @@ public class FragmentMap
         int position = 0;
         for (Marker m : circuitMarkers) {
             if (m.equals(marker)) {
-                viewPager.setCurrentItem(position);
+                viewPager.setCurrentItem(position+1);
                 break;
             }
             position++;
@@ -959,7 +962,14 @@ public class FragmentMap
             }
         });
 
-        ViewPager viewPager = getView().findViewById(R.id.viewpager_circuitStops);
+        final ViewPager viewPager = getView().findViewById(R.id.viewpager_circuitStops);
+
+        //this is to add 2 dummy items to make viewpager "linked"
+        List<Place> places = viewModel.getStops();
+        places.add(places.get(0));
+        places.add(0, places.get(places.size()-2));
+
+
         final CircuitMapPagerAdapter adapter = new CircuitMapPagerAdapter(getContext(), viewModel) {
             @Override
             public  void callback(long placeId){
@@ -968,14 +978,27 @@ public class FragmentMap
             MainActivity activity = (MainActivity)getActivity();
             activity.showPlaceDetail(placeId, false);
             }
+
+            @Override
+            public void leftButton(){
+                viewPager.arrowScroll(View.FOCUS_LEFT);
+            }
+
+            @Override
+            public void rightButton(){
+                viewPager.arrowScroll(View.FOCUS_RIGHT);
+            }
         };
 
         viewPager.setAdapter(adapter);
+        viewPager.setCurrentItem(1, false);
+
+
         viewPager.setVisibility(View.VISIBLE);
 
         //todo: remove this and rework panel so that viewpager is hidden until user selects a node
         int selectedPosition = viewPager.getCurrentItem();
-        circuitMarkers.get(selectedPosition).setIcon(MapUtils.bitmapDescriptorFromVector(FragmentMap.this.getContext(), R.drawable.marker_circuit));
+        circuitMarkers.get(selectedPosition-1).setIcon(MapUtils.bitmapDescriptorFromVector(FragmentMap.this.getContext(), R.drawable.marker_circuit));
 
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
@@ -985,9 +1008,20 @@ public class FragmentMap
 
             @Override
             public void onPageSelected(int position) {
-                LatLng location = circuitMarkers.get(position).getPosition();
+
+                if (position == circuitMarkers.size()+1) {
+                    viewPager.setCurrentItem(1, false);
+                    return;
+                }
+                if (position == 0) {
+                    viewPager.setCurrentItem(circuitMarkers.size(), false); // false will prevent sliding                      animation of view pager
+                    return;
+                }
+
+
+                LatLng location = circuitMarkers.get(position-1).getPosition();
                 map.animateCamera(CameraUpdateFactory.newLatLng(location));
-                updateCircuitActiveMarker(circuitMarkers.get(position));
+                updateCircuitActiveMarker(circuitMarkers.get(position-1));
 
             }
 

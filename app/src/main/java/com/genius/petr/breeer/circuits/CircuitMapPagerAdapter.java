@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.genius.petr.breeer.R;
@@ -55,6 +56,34 @@ public class CircuitMapPagerAdapter extends PagerAdapter {
             }
         });
 
+        ImageButton leftButton =  layout.findViewById(R.id.leftButton);
+        leftButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                leftButton();
+            }
+        });
+
+        if (position == 0) {
+            leftButton.setEnabled(false);
+        } else {
+            leftButton.setEnabled(true);
+        }
+
+        ImageButton rightButton =  layout.findViewById(R.id.rightButton);
+        rightButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                rightButton();
+            }
+        });
+
+        if (position == viewModel.getStops().size()-1) {
+            rightButton.setEnabled(false);
+        } else {
+            rightButton.setEnabled(true);
+        }
+
         collection.addView(layout);
         return layout;
     }
@@ -62,6 +91,14 @@ public class CircuitMapPagerAdapter extends PagerAdapter {
 
     public void callback(long placeId){
         Log.i("callbackTest", "from adapter");
+    }
+
+    public void leftButton(){
+
+    }
+
+    public void rightButton(){
+
     }
 
 
