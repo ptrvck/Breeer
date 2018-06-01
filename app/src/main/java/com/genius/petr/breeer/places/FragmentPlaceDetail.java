@@ -34,6 +34,7 @@ public class FragmentPlaceDetail extends Fragment {
 
     private TextView tvPlaceName;
     private TextView tvPlaceType;
+    private TextView tvAddress;
     private TextView tvDescription;
     private TextView tvPhone;
     private TextView tvWeb;
@@ -53,6 +54,7 @@ public class FragmentPlaceDetail extends Fragment {
         View view = inflater.inflate(R.layout.fragment_place_detail, container, false);
         this.tvPlaceName = view.findViewById(R.id.tv_placeName);
         this.tvPlaceType = view.findViewById(R.id.tv_placeType);
+        this.tvAddress = view.findViewById(R.id.tv_address);
         this.tvDescription = view.findViewById(R.id.tv_description);
         this.tvPhone = view.findViewById(R.id.tv_phone);
         this.tvWeb = view.findViewById(R.id.tv_web);
@@ -68,13 +70,24 @@ public class FragmentPlaceDetail extends Fragment {
                 if (place == null) {
                     return;
                 }
+
+                int color = ContextCompat.getColor(getContext(), PlaceConstants.CATEGORY_COLORS.get(place.getCategory()));
+
+
                 tvPlaceName.setText(place.getName());
                 tvPlaceType.setText(PlaceConstants.CATEGORY_NAMES.get(place.getCategory()));
+
+                tvAddress.setText(place.getAddress());
+                tvAddress.setTextColor(color);
+                if (place.getAddress().isEmpty()) {
+                    tvAddress.setVisibility(View.GONE);
+                }
+
                 tvDescription.setText(place.getDescription());
                 tvPhone.setText(place.getPhone());
                 tvWeb.setText(place.getWeb());
 
-                int color = ContextCompat.getColor(getContext(), PlaceConstants.CATEGORY_COLORS.get(place.getCategory()));
+
                 mapButton.getBackground().setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
                 tvDescription.setLinkTextColor(color);
                 tvPlaceType.setTextColor(color);

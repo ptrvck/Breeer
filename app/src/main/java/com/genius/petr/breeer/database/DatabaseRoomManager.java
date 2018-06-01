@@ -53,6 +53,11 @@ public class DatabaseRoomManager {
                     public void onErrorResponse(VolleyError error) {
                         Log.e(TAG, error.toString());
                         Log.e(TAG, "That didn't work");
+
+                        if (listener != null) {
+                            listener.onDatabaseUpdateFinished(false);
+                        }
+
                     }
                 });
 

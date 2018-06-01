@@ -4,15 +4,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorBackgroundLight"
-    android:padding="30dp">
+    android:background="@color/colorBackgroundLight">
 
     <android.support.v7.widget.AppCompatImageButton
         android:id="@+id/upButton"
-        android:layout_width="25dp"
-        android:layout_height="20dp"
         android:scaleType="fitCenter"
-        android:layout_marginBottom="10dp"
+        android:layout_width="85dp"
+        android:layout_height="60dp"
+        android:paddingBottom="10dp"
+        android:paddingLeft="30dp"
+        android:paddingRight="30dp"
+        android:paddingTop="30dp"
         app:srcCompat="@drawable/back"
         android:background="@color/colorTransparent"/>
 
@@ -21,20 +23,27 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         style="@style/MainTitle"
-        android:layout_below="@id/upButton"/>
+        android:layout_below="@id/upButton"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"/>
 
     <TextView
         android:id="@+id/tv_placeType"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         style="@style/CategoryTitle"
-        android:layout_below="@id/tv_placeName" />
+        android:layout_below="@id/tv_placeName"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"/>
+
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/tv_placeType"
-        android:layout_above="@id/button_showOnMap">
+        android:layout_above="@id/button_showOnMap"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -43,7 +52,16 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/tv_description"/>
+                android:id="@+id/tv_description"
+                android:lineSpacingMultiplier="1.5"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/tv_address"
+                android:textSize="16sp"
+                android:layout_marginTop="15dp"/>
+
 
             <TextView
                 android:layout_width="wrap_content"
@@ -72,7 +90,10 @@
         android:layout_alignParentBottom="true"
         android:text="Show on map"
         android:background="@drawable/rounded_button"
-        style="@style/buttonStyle"/>
+        style="@style/buttonStyle"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:layout_marginBottom="30dp"/>
 
 
     <View

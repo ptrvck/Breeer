@@ -106,6 +106,8 @@ public class FragmentMap
     private Marker activeMarker = null;
     private long activePlaceId = -1;
 
+    private boolean showingCategory = false;
+
     private static final int STATE_PLACES = 0;
     private static final int STATE_CIRCUIT = 1;
     private static final int STATE_SINGLE = 2;
@@ -290,9 +292,6 @@ public class FragmentMap
         map.setOnMarkerClickListener(this);
 
 
-        MainActivity activity = (MainActivity)getActivity();
-        activity.tryToEnableLocation();
-
         if (currentState == STATE_SINGLE) {
             final RelativeLayout placeDetail = getView().findViewById(R.id.placeLayout);
             placeDetail.setVisibility(View.GONE);
@@ -326,6 +325,9 @@ public class FragmentMap
 
     @Override
     public void onMapLoaded() {
+        MainActivity activity = (MainActivity)getActivity();
+        activity.tryToEnableLocation();
+
         View overlay = getView().findViewById(R.id.loadingOverlay);
         overlay.setVisibility(View.GONE);
         if (currentState == STATE_PLACES) {
@@ -470,6 +472,13 @@ public class FragmentMap
         Button navigateButton = placeDetail.findViewById(R.id.button_startNavigation);
         navigateButton.setEnabled(true);
         Toast.makeText(getContext(), "Your phone has no idea where you are.", Toast.LENGTH_LONG).show();
+    }
+
+    public void navigationDenied(){
+        RelativeLayout placeDetail = getView().findViewById(R.id.placeLayout);
+        Button navigateButton = placeDetail.findViewById(R.id.button_startNavigation);
+        navigateButton.setEnabled(true);
+        Toast.makeText(getContext(), "Can't navigate because we don't know where you are.", Toast.LENGTH_LONG).show();
     }
 
     private void navigateToActivePlace() {
@@ -741,7 +750,6 @@ public class FragmentMap
     }
 
     public void showCategory(int category) {
-        Log.i(TAG, "showcing cat: " + category);
 
         hideCurrentState();
 
@@ -757,6 +765,7 @@ public class FragmentMap
             }
         }
 
+        showingCategory = true;
         activateStatePlaces();
 
     }
@@ -808,13 +817,21 @@ public class FragmentMap
     @Override
     public void onResume() {
         super.onResume();
-        activeMarker = null;
+        //activeMarker = null;
         mMapView.onResume();
     }
 
     @Override
     public void onPause() {
         super.onPause();
+
+        /*
+        //todo: this is now called to prevent crash when app was suspended to background and restored (it crashed when you unselect marker)
+        if (currentState == STATE_NAVIGATION_DETAIL) {
+            hidePlaceDetail();
+        }
+        */
+
         mMapView.onPause();
     }
 
@@ -835,7 +852,11 @@ public class FragmentMap
         Log.i(TAG, "onSaveCalled");
         super.onSaveInstanceState(outState);
         mMapView.onSaveInstanceState(outState);
-        outState.putInt(SAVE_STATE_STATE, currentState);
+        if (currentState == STATE_NAVIGATION || currentState == STATE_NAVIGATION_DETAIL) {
+            outState.putInt(SAVE_STATE_STATE, STATE_SINGLE);
+        } else {
+            outState.putInt(SAVE_STATE_STATE, currentState);
+        }
         Log.i("circuitTest", "current state: " + currentState);
         if (currentState == STATE_CIRCUIT) {
             outState.putLong(SAVE_STATE_CIRCUIT, activeCircuit.getId());
@@ -855,12 +876,27 @@ public class FragmentMap
     }
 
     private  void addClusters(List<PlaceCluster> clusters){
+
+        LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
+
         clusterManager.clearItems();
         for (PlaceCluster cluster : clusters) {
             clusterManager.addItem(cluster);
+            boundsBuilder.include(cluster.getPosition());
         }
 
         clusterManager.cluster();
+
+        //todo: find a more elegant way to handle this?
+        if (showingCategory) {
+            showingCategory = false;
+
+            LatLngBounds bounds = boundsBuilder.build();
+            int width = getResources().getDisplayMetrics().widthPixels;
+            int padding = (int)(width*0.2); // offset from edges of the map in pixels
+            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+            map.animateCamera(cameraUpdate);
+        }
     }
 
     public void showCircuit(Long id){
@@ -943,21 +979,6 @@ public class FragmentMap
         if (path.size() < 2) {
             return;
         }
-
-        LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
-        final PolylineOptions polylineOptions = new PolylineOptions();
-
-        for (LatLng node : path) {
-            polylineOptions.add(node);
-            boundsBuilder.include(node);
-        }
-
-        LatLngBounds bounds = boundsBuilder.build();
-        int width = getResources().getDisplayMetrics().widthPixels;
-        int padding = (int)(width*0.2); // offset from edges of the map in pixels
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, padding);
-        map.animateCamera(cameraUpdate);
-
 
         RelativeLayout circuitLayout = getView().findViewById(R.id.circuitLayout);
         RelativeLayout circuitLabelLayout = getView().findViewById(R.id.circuitLabelLayout);
@@ -1057,7 +1078,23 @@ public class FragmentMap
             }
         });
 
+        LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
+        final PolylineOptions polylineOptions = new PolylineOptions();
+
+        for (LatLng node : path) {
+            polylineOptions.add(node);
+            boundsBuilder.include(node);
+        }
+
+
         map.addPolyline(polylineOptions);
+
+        LatLngBounds bounds = boundsBuilder.build();
+        int width = getResources().getDisplayMetrics().widthPixels;
+        int padding = (int)(width*0.2); // offset from edges of the map in pixels
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+        map.animateCamera(cameraUpdate);
+
 
         currentState = STATE_CIRCUIT;
     }
@@ -1261,6 +1298,12 @@ public class FragmentMap
                 return true;
             }
         }
+
+        if (currentState == STATE_NAVIGATION_DETAIL) {
+            hidePlaceDetail();
+            return true;
+        }
+
 
         //todo: if there is circuit displayed, show dialog to make sure they want to close it
         if (currentState != STATE_PLACES) {

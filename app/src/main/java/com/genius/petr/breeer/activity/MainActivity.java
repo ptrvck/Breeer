@@ -48,7 +48,6 @@ import java.util.Locale;
 public class MainActivity extends AppCompatActivity {
 
     private BreeerViewPager viewPager;
-    private static final String TAG = "mainLog";
 
     private Fragment placesFragmentToShow = null;
 
@@ -244,9 +243,7 @@ public class MainActivity extends AppCompatActivity {
                 item.setChecked(item.getItemData().isChecked());
             }
         } catch (NoSuchFieldException e) {
-            Log.e("BNVHelper", "Unable to get shift mode field", e);
         } catch (IllegalAccessException e) {
-            Log.e("BNVHelper", "Unable to change value of shift mode", e);
         }
     }
 
@@ -259,10 +256,8 @@ public class MainActivity extends AppCompatActivity {
                     == PackageManager.PERMISSION_GRANTED) {
                 //Location Permission already granted
                 enableMapLocation();
-                Log.i(TAG, "location permission granted");
             } else {
                 //Request Location Permission
-                Log.i(TAG, "requesting location permission");
                 checkLocationPermission();
             }
         }
@@ -294,7 +289,6 @@ public class MainActivity extends AppCompatActivity {
                         });
             } else {
                 //Request Location Permission
-                Log.i(TAG, "requesting location permission");
                 checkLocationPermissionForNavigation();
             }
         }
@@ -326,7 +320,6 @@ public class MainActivity extends AppCompatActivity {
             // Should we show an explanation?
             if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
 
-                Log.i(TAG, "show explanation");
 
                 // Show an explanation to the user *asynchronously* -- don't block
                 // this thread waiting for the user's response! After the user
@@ -347,7 +340,6 @@ public class MainActivity extends AppCompatActivity {
 
 
             } else {
-                Log.i(TAG, "explanation not needed");
                 // No explanation needed, we can request the permission.
                 requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                         MY_PERMISSIONS_REQUEST_LOCATION_PLACES );
@@ -363,7 +355,6 @@ public class MainActivity extends AppCompatActivity {
             // Should we show an explanation?
             if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
 
-                Log.i(TAG, "show explanation");
 
                 // Show an explanation to the user *asynchronously* -- don't block
                 // this thread waiting for the user's response! After the user
@@ -384,7 +375,6 @@ public class MainActivity extends AppCompatActivity {
 
 
             } else {
-                Log.i(TAG, "explanation not needed");
                 // No explanation needed, we can request the permission.
                 requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                         MY_PERMISSIONS_REQUEST_LOCATION_NAVIGATION );
@@ -399,8 +389,6 @@ public class MainActivity extends AppCompatActivity {
 
             // Should we show an explanation?
             if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
-
-                Log.i(TAG, "show explanation");
 
                 // Show an explanation to the user *asynchronously* -- don't block
                 // this thread waiting for the user's response! After the user
@@ -421,7 +409,6 @@ public class MainActivity extends AppCompatActivity {
 
 
             } else {
-                Log.i(TAG, "explanation not needed");
                 // No explanation needed, we can request the permission.
                 requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                         MY_PERMISSIONS_REQUEST_LOCATION );
@@ -432,7 +419,9 @@ public class MainActivity extends AppCompatActivity {
     private void enableMapLocation() {
         BreeerViewPagerAdapter adapter = (BreeerViewPagerAdapter)viewPager.getAdapter();
         FragmentMap mapFragment = (FragmentMap)adapter.getFragment(0);
-        mapFragment.enableMyLocation();
+        if (mapFragment != null) {
+            mapFragment.enableMyLocation();
+        }
     }
 
     private void navigateToActivePlace(Location location) {
@@ -443,6 +432,12 @@ public class MainActivity extends AppCompatActivity {
         } else {
             mapFragment.startNavigationToActivePlace(new LatLng(location.getLatitude(), location.getLongitude()));
         }
+    }
+
+    private void navigationDenied(){
+        BreeerViewPagerAdapter adapter = (BreeerViewPagerAdapter)viewPager.getAdapter();
+        FragmentMap mapFragment = (FragmentMap)adapter.getFragment(0);
+        mapFragment.navigationDenied();
     }
 
 
@@ -504,7 +499,7 @@ public class MainActivity extends AppCompatActivity {
 
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
-                    Toast.makeText(this, "permission denied", Toast.LENGTH_LONG).show();
+                    navigationDenied();
                 }
                 return;
             }
@@ -549,7 +544,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void tryToShowPlaces() {
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Log.i("route", "new");
             if (ContextCompat.checkSelfPermission(this,
                     Manifest.permission.ACCESS_FINE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED) {
@@ -569,7 +563,6 @@ public class MainActivity extends AppCompatActivity {
                         });
             } else {
                 //Request Location Permission
-                Log.i(TAG, "requesting location permission");
                 checkLocationPermissionPlaces();
             }
         }
