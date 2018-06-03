@@ -986,16 +986,6 @@ public class FragmentMap
         circuitLayout.setVisibility(View.VISIBLE);
 
 
-        circuitLabelLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                RelativeLayout circuitLabelLayout = getView().findViewById(R.id.circuitLabelLayout);
-                circuitLabelLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                int topPadding = circuitLabelLayout.getHeight();
-                map.setPadding(0, topPadding, 0 , 0);
-            }
-        });
-
 
         TextView tvCircuitName = getView().findViewById(R.id.circuitName);
         tvCircuitName.setText(activeCircuit.getName());
@@ -1042,6 +1032,18 @@ public class FragmentMap
 
 
         viewPager.setVisibility(View.VISIBLE);
+
+        circuitLabelLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                RelativeLayout circuitLabelLayout = getView().findViewById(R.id.circuitLabelLayout);
+                circuitLabelLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                int topPadding = circuitLabelLayout.getHeight();
+                int bottomPadding = viewPager.getHeight();
+                map.setPadding(0, topPadding, 0 , bottomPadding);
+            }
+        });
+
 
         //todo: remove this and rework panel so that viewpager is hidden until user selects a node
         int selectedPosition = viewPager.getCurrentItem();
